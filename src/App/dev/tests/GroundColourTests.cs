@@ -62,4 +62,34 @@ static class GroundColourTests
         Check.That(dim.R < paper.R * 0.85f, $"a moonlit night dims the paper, seen {dim.ToHtml(false)}");
         Check.That(Math.Abs(dim.R / dim.B - paper.R / paper.B) < 0.06f, $"and still leaves its hue alone, seen {dim.ToHtml(false)}");
     }
+
+    const int Patch = 40;
+
+    static async Task<float> WoodSeen(TestRunner r, HudTests.Rig h, string id, int forest)
+    {
+        var wood = ReliefGrid.Flat(20, 20);
+        Array.Fill(wood.Kind, GroundKinds.Wood);
+        Array.Fill(wood.Detail, GroundKinds.WithForest(GroundKinds.Levels(80, 0), forest));
+        var (sha, _) = ReliefImport.Save(wood, h.S.Store.Root);
+        h.S.Relief.Remember(sha, wood);
+        h.S.Do(new SetSheetRelief { Id = id, Relief = sha, Height = 1 });
+        await r.Frames(SettleFrames);
+        var shot = r.GetViewport().GetTexture().GetImage();
+        float sum = 0;
+        for (int y = 0; y < Patch; y++)
+            for (int x = 0; x < Patch; x++) sum += shot.GetPixel(shot.GetWidth() / 2 - Patch / 2 + x, shot.GetHeight() / 2 - Patch / 2 + y).Luminance;
+        return sum / (Patch * Patch);
+    }
+
+    [ScreenTest]
+    static async Task A_conifer_wood_is_painted_darker_than_a_broadleaf_one(TestRunner r)
+    {
+        var h = await HudTests.Host(r, pieces: 0, sheets: 1);
+        var id = h.S.View.Sheets[0].Id;
+        h.Hud.Visible = false;
+        if (!h.Table.Rig.TopDown) h.Table.Rig.ToggleTopDown();
+        h.Table.Rig.Frame(Coords.ToWorld(h.S.View.Sheets[0].Pos), ViewAcross);
+        float broad = await WoodSeen(r, h, id, GroundKinds.Broadleaf), conifer = await WoodSeen(r, h, id, GroundKinds.Conifer);
+        Check.That(broad > 0.01f && conifer < broad * 0.97f, $"conifer {conifer:0.###} against broadleaf {broad:0.###}");
+    }
 }

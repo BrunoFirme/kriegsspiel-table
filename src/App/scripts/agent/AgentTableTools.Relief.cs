@@ -43,6 +43,7 @@ sealed partial class AgentTableTools
                 new Arg("kind", "string", "ground type for paint"),
                 new Arg("density", "number", "for paint, 0–1 of the ground that takes it (1 if left out)"),
                 new Arg("trees", "number", "wood: 0–1, open wood to closed forest (0.75 if left out)"),
+                new Arg("forest", "string", "wood: " + GroundKinds.ForestIds + " (regional, the trees of its culture and place, if left out)"),
                 new Arg("fill", "boolean", "paint: fill the patch at the first point"), new Arg("cell", "boolean", "fill: only its grid cell"),
                 new Arg("shape", "string", "for paint, instead of brushing (radius then unused): rect or ellipse between two opposite corners, lined up with the map; polygon through its corners, three or more"),
                 new Arg("route", "boolean", "for paint: the points are waypoints and the ground finds its way between them over the relief at the radius; water takes only the first point and runs downhill from it as a river, as far as the ground falls"),
@@ -66,6 +67,9 @@ sealed partial class AgentTableTools
             percent[at] = (int)Math.Round(Math.Clamp(value, 0, 1) * 100);
         }
         detail = GroundKinds.Levels(percent.Length > 0 ? percent[0] : 0, percent.Length > 1 ? percent[1] : 0);
+        if (a.Str("forest") is not { Length: > 0 } forest) return null;
+        if (kind != GroundKinds.Wood || !GroundKinds.Forests.Any(f => string.Equals(f.Id, forest.Trim(), StringComparison.OrdinalIgnoreCase))) return ToolResult.Fail("forest is for wood: " + GroundKinds.ForestIds + ".");
+        detail = GroundKinds.WithForest(detail, GroundKinds.ForestNamed(forest));
         return null;
     }
 
@@ -112,6 +116,7 @@ sealed partial class AgentTableTools
         var parameters = GroundKinds.Parameters(kind);
         if (parameters.Count > 0) row[parameters[0].Name.ToLowerInvariant()] = Math.Round(levels.First / 100.0, 2);
         if (parameters.Count > 1) row[parameters[1].Name.ToLowerInvariant()] = Math.Round(levels.Second / 100.0, 2);
+        if (kind == GroundKinds.Wood) row["forest"] = GroundKinds.Forests[GroundKinds.ForestOf(g.DetailAt(p))].Id;
         if (g.ReliefAt(p) != null) row["rock"] = kind == GroundKinds.Of("rock") || g.SlopeAt(p) >= RockSlope;
         return row;
     }

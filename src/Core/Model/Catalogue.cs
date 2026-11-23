@@ -115,6 +115,16 @@ public static class Catalogue
         entry.Era == Any || entry.Era == (ancient ? OldOnly : LaterOnly) || modern && entry.Era == ModernOnly || !ancient && !modern && !medieval && entry.Era == Powder
         || !ancient && !modern && entry.Era == Pillory;
 
+    public static IEnumerable<Section> Every(bool blocksOnly = false) =>
+        Sections.Select(s => s with { Entries = s.Entries.Where(e => !blocksOnly || e.Block).OrderBy(e => EraOrder(e.Era)).ToList() }).Where(s => s.Entries.Count > 0);
+
+    static int EraOrder(int era) => era switch { Any => 0, OldOnly => 1, Pillory => 2, LaterOnly => 3, Powder => 4, _ => 5 };
+
+    public static string? EraName(int era) => era switch
+    {
+        OldOnly => "Ancient", LaterOnly => "Medieval to modern", ModernOnly => "Modern", Powder => "Later", Pillory => "Medieval and later", _ => null,
+    };
+
     public static IEnumerable<Section> For(bool ancient, bool blocksOnly = false, bool modern = false, bool medieval = false) =>
         Sections.Select(s => s with { Entries = s.Entries.Where(e => Fits(e, ancient, modern, medieval) && (!blocksOnly || e.Block)).ToList() })
             .Where(s => s.Entries.Count > 0);

@@ -33,7 +33,7 @@ sealed class PickZoneRows : HudPart
 
     BuildZone Zone => T.Build.Zone;
 
-    (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures => BuildPanel.CulturesOf(S);
+    static (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures => BuildPanel.AllCultures();
 
     static T Shut<T>(T control, bool shut) where T : Control
     {
@@ -45,7 +45,7 @@ sealed class PickZoneRows : HudPart
     void Picker(GridContainer form, string label, string now, Action<string> pick)
     {
         form.AddChild(new Label { Text = label });
-        form.AddChild(Shut(Ui.Picker(Cultures, now, pick), !Zone.May));
+        form.AddChild(Shut(BuildPanel.CulturePicker(Cultures, now, pick), !Zone.May));
     }
 
     void Chips(GridContainer form, string label, (string Key, string Text, string Tip)[] items, string now, Action<string> pick)

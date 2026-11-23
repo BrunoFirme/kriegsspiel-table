@@ -55,7 +55,7 @@ static class RaisedForest
     static void Cell(SheetDef sheet, Ground ground, float top, float upm, float chunk, Dictionary<(int, int), RaisedChunk> chunks, BuiltNear.Field near, ReliefGrid grid, int cx, int cy,
         float trees, int culture, IReadOnlySet<(int, int)>? only)
     {
-        int cols = grid.Cols, rows = grid.Rows, i = cy * cols + cx;
+        int cols = grid.Cols, rows = grid.Rows, i = cy * cols + cx, forest = GroundKinds.ForestOf(grid.Detail[i]);
         float salt = grid.Salt[i] + SaltLift;
         float apart = Mathf.Lerp(OpenApartM, CloseApartM, trees) * upm, keep = Mathf.Lerp(0.6f, 0.97f, trees);
         float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
@@ -84,7 +84,7 @@ static class RaisedForest
                 if (Felled(near, (float)uu, (float)vv, crownM, Hash(id + Vector2.One * 7.7f))) continue;
                 bool conifer = Hash(id + Vector2.One * 6.1f) <= ConiferShare(o, salt, upm);
                 var at = new Vector3(o.X, top + (float)ground.DrawnAt(on), o.Y);
-                Add(chunks, chunk, at, Regional(culture, conifer, Hash(id + Vector2.One * 5.3f)), crownM * upm, Hash(id + Vector2.One * 9.1f), only);
+                Add(chunks, chunk, at, Kind(forest, culture, conifer, Hash(id + Vector2.One * 5.3f)), crownM * upm, Hash(id + Vector2.One * 9.1f), only);
             }
         }
     }
@@ -110,6 +110,18 @@ static class RaisedForest
         : Manners.Kin(culture) == Manners.Northern && pick < 0.5f ? TreeKind.Conifer
         : Manners.Kin(culture) == Manners.Roman && pick < 0.35f || culture == Manners.Persian && pick < 0.6f || culture == Manners.Ottoman && pick < 0.7f
             || culture == Manners.Byzantine && pick < 0.45f || culture == Manners.Saracen && pick < 0.75f ? TreeKind.Cypress : TreeKind.Broad;
+
+    public static TreeKind Kind(int forest, int culture, bool conifer, float pick) => forest switch
+    {
+        GroundKinds.Broadleaf => TreeKind.Broad,
+        GroundKinds.Conifer => TreeKind.Conifer,
+        GroundKinds.Mixed => pick < MixedConifers ? TreeKind.Conifer : TreeKind.Broad,
+        GroundKinds.Birch => pick < BirchShare ? TreeKind.Birch : TreeKind.Conifer,
+        GroundKinds.PalmAndOlive => pick < PalmShare ? TreeKind.Palm : TreeKind.Olive,
+        _ => Regional(culture, conifer, pick),
+    };
+
+    const float MixedConifers = 0.5f, BirchShare = 0.8f, PalmShare = 0.5f;
 
     public static TreeKind Regional(int culture, bool conifer, float pick)
     {

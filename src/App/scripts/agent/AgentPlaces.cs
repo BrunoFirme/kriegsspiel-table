@@ -18,7 +18,7 @@ static class AgentPlaces
         return Manners.All.Any(m => m.Id == id) ? Manners.For(BuildTool.Epoch(s), Manners.Of(id)) : null;
     }
 
-    static string Cultures(Session s) => "a culture of the map's age: " + string.Join(", ", Manners.In(BuildTool.Epoch(s)).Select(Manners.Id)) + ".";
+    static string Cultures(Session s) => "a culture: " + string.Join(", ", Manners.ByAge.Select(Manners.Id)) + ".";
 
     static bool Coat(string asked, out double? coat)
     {

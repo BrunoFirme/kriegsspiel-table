@@ -276,6 +276,16 @@ const float SLOPE_SHADE = 0.3;
 const float SLOPE_LIGHT = 0.22;
 const float BANK_CELLS = 3.0;
 const int LEVEL_STEPS = 15;
+
+vec3 forest_tint(float second) {
+	int forest = int(round(second * float(LEVEL_STEPS)));
+	if (forest == 2) return vec3(0.8, 0.9, 0.92);
+	if (forest == 3) return vec3(0.9, 0.95, 0.94);
+	if (forest == 4) return vec3(1.12, 1.12, 1.02);
+	if (forest == 5) return vec3(1.1, 1.06, 0.86);
+	return vec3(1.0);
+}
+
 const float STAND_M = 250.0;
 const float PADDOCK_M = 300.0;
 const float MARSH_LOT_M = 200.0;

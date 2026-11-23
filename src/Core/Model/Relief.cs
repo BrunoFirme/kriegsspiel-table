@@ -10,6 +10,38 @@ public sealed class ReliefIndex
     public List<string> Ground { get; set; } = new();
     public List<string>? Seeds { get; set; }
     public List<string>? Details { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] public List<LayerChunks>? Layers { get; set; }
+}
+
+public sealed class LayerChunks
+{
+    public string Id { get; set; } = "";
+    public List<string> Ground { get; set; } = new();
+    public List<string> Seeds { get; set; } = new();
+    public List<string> Details { get; set; } = new();
+}
+
+public sealed class GroundCells
+{
+    public readonly byte[] Kind, Salt, Detail;
+
+    public GroundCells(int cells)
+    {
+        Kind = new byte[cells];
+        Salt = new byte[cells];
+        Detail = new byte[cells];
+    }
+
+    public GroundCells(byte[] kind, byte[] salt, byte[] detail)
+    {
+        Kind = kind;
+        Salt = salt;
+        Detail = detail;
+    }
+
+    public GroundCells Copy() => new((byte[])Kind.Clone(), (byte[])Salt.Clone(), (byte[])Detail.Clone());
+
+    public bool Bare => Kind.AsSpan().IndexOfAnyExcept(GroundKinds.None) < 0;
 }
 
 public static class GroundKinds
@@ -105,6 +137,19 @@ public static class GroundKinds
 
     public static byte Levels(int first, int second) => (byte)(Nibble(first) | Nibble(second) << 4);
 
+    public const int Regional = 0, Broadleaf = 1, Conifer = 2, Mixed = 3, Birch = 4, PalmAndOlive = 5;
+
+    public static readonly IReadOnlyList<(string Id, string Name)> Forests =
+        [("regional", "Regional"), ("broadleaf", "Broadleaf"), ("conifer", "Conifer"), ("mixed", "Mixed"), ("birch", "Birch"), ("palm", "Palm & olive")];
+
+    public static string ForestIds => string.Join(", ", Forests.Select(f => f.Id));
+
+    public static int ForestOf(byte detail) => Math.Min(detail >> 4, Forests.Count - 1);
+
+    public static byte WithForest(byte detail, int forest) => (byte)(detail & LevelSteps | Math.Clamp(forest, 0, Forests.Count - 1) << 4);
+
+    public static int ForestNamed(string? id) => Math.Max(0, Forests.ToList().FindIndex(f => string.Equals(f.Id, id?.Trim(), StringComparison.OrdinalIgnoreCase)));
+
     public static byte DefaultLevels(byte kind)
     {
         var p = Parameters(kind);
@@ -179,6 +224,12 @@ public sealed class ReliefGrid
 
     public bool Worked { get; set; }
 
+    public Dictionary<string, GroundCells>? Layers { get; private set; }
+
+    public IReadOnlyList<string> Order { get; private set; } = [GroundLayerDef.BaseId];
+
+    public GroundCells? Painting { get; private set; }
+
     public ReliefGrid(int cols, int rows)
     {
         if (cols < 2 || rows < 2 || cols > MaxSide || rows > MaxSide) throw new InvalidDataException($"a relief grid of {cols} × {rows} is out of range");
@@ -210,6 +261,11 @@ public sealed class ReliefGrid
 
     public void FinerInto(ReliefGrid fine, int times, CellBox box)
     {
+        if (Layers != null)
+        {
+            fine.Layered();
+            fine.Order = Order;
+        }
         for (int y = box.Y0; y <= box.Y1; y++)
             for (int x = box.X0; x <= box.X1; x++)
             {
@@ -218,6 +274,14 @@ public sealed class ReliefGrid
                 fine.Kind[i] = Kind[from];
                 fine.Salt[i] = Salt[from];
                 fine.Detail[i] = Detail[from];
+                if (Layers == null) continue;
+                foreach (var (id, cells) in Layers)
+                {
+                    var into = fine.Cells(id);
+                    into.Kind[i] = cells.Kind[from];
+                    into.Salt[i] = cells.Salt[from];
+                    into.Detail[i] = cells.Detail[from];
+                }
             }
     }
 
@@ -228,6 +292,8 @@ public sealed class ReliefGrid
         Array.Copy(Kind, c.Kind, Kind.Length);
         Array.Copy(Salt, c.Salt, Salt.Length);
         Array.Copy(Detail, c.Detail, Detail.Length);
+        c.Order = Order;
+        if (Layers != null) c.Layers = Layers.ToDictionary(l => l.Key, l => l.Value.Copy());
         return c;
     }
 
@@ -236,6 +302,8 @@ public sealed class ReliefGrid
         if (from.Cols != Cols || from.Rows != Rows) throw new ArgumentException($"a {from.Cols} × {from.Rows} grid cannot fill a {Cols} × {Rows} one");
         var b = box.Clip(Cols, Rows);
         if (b.Empty) return;
+        if (from.Layers != null) Layered();
+        var theirs = from.Layers ?? new Dictionary<string, GroundCells> { [GroundLayerDef.BaseId] = new(from.Kind, from.Salt, from.Detail) };
         for (int y = b.Y0; y <= b.Y1; y++)
         {
             int at = y * Cols + b.X0;
@@ -243,8 +311,118 @@ public sealed class ReliefGrid
             Array.Copy(from.Kind, at, Kind, at, b.Width);
             Array.Copy(from.Salt, at, Salt, at, b.Width);
             Array.Copy(from.Detail, at, Detail, at, b.Width);
+            if (Layers == null) continue;
+            foreach (var (id, mine) in Layers)
+                if (!theirs.ContainsKey(id)) Array.Clear(mine.Kind, at, b.Width);
+            foreach (var (id, cells) in theirs)
+            {
+                var into = Cells(id);
+                Array.Copy(cells.Kind, at, into.Kind, at, b.Width);
+                Array.Copy(cells.Salt, at, into.Salt, at, b.Width);
+                Array.Copy(cells.Detail, at, into.Detail, at, b.Width);
+            }
         }
     }
+
+    public GroundCells Cells(string layer)
+    {
+        Layered();
+        if (!Layers!.TryGetValue(layer, out var cells)) Layers[layer] = cells = new GroundCells(Kind.Length);
+        return cells;
+    }
+
+    public void Layered()
+    {
+        if (Layers != null) return;
+        Layers = new() { [GroundLayerDef.BaseId] = new GroundCells((byte[])Kind.Clone(), (byte[])Salt.Clone(), (byte[])Detail.Clone()) };
+    }
+
+    public void Aim(string layer, IReadOnlyList<string> order)
+    {
+        Fold(layer);
+        Order = order;
+        Painting = Layers == null && layer == GroundLayerDef.BaseId && order.Contains(layer) ? null : Cells(layer);
+        if (Painting != null) Compose(order);
+    }
+
+    public void Ordered(IReadOnlyList<string> order) => Order = order;
+
+    public void Compose(IReadOnlyList<string> order)
+    {
+        Order = order;
+        if (Layers == null)
+        {
+            if (order.Contains(GroundLayerDef.BaseId)) return;
+            Layered();
+        }
+        for (int i = 0; i < Kind.Length; i++) ComposeCell(i);
+    }
+
+    public void ComposeCell(int i)
+    {
+        if (Showing(i) is { } cells)
+        {
+            Kind[i] = cells.Kind[i];
+            Salt[i] = cells.Salt[i];
+            Detail[i] = cells.Detail[i];
+            return;
+        }
+        Kind[i] = GroundKinds.None;
+        Salt[i] = 0;
+        Detail[i] = 0;
+    }
+
+    public void Fold(string into)
+    {
+        if (Layers == null) return;
+        for (int i = 0; i < Kind.Length; i++)
+        {
+            byte kind = Kind[i], salt = Salt[i], detail = Detail[i];
+            var shows = Showing(i);
+            if (shows == null ? kind == GroundKinds.None : shows.Kind[i] == kind && shows.Salt[i] == salt && shows.Detail[i] == detail) continue;
+            if (kind == GroundKinds.None)
+            {
+                foreach (var cells in Layers.Values) cells.Kind[i] = GroundKinds.None;
+                continue;
+            }
+            var target = shows ?? Cells(into);
+            target.Kind[i] = kind;
+            target.Salt[i] = salt;
+            target.Detail[i] = detail;
+        }
+    }
+
+    GroundCells? Showing(int i)
+    {
+        foreach (var id in Order)
+            if (Layers!.TryGetValue(id, out var cells) && cells.Kind[i] != GroundKinds.None) return cells;
+        return null;
+    }
+
+    public void Settle(IReadOnlyList<string> order, string into)
+    {
+        Painting = null;
+        Fold(into);
+        if (Layers == null)
+        {
+            Order = order;
+            if (!order.Contains(GroundLayerDef.BaseId)) Bared();
+            return;
+        }
+        foreach (var gone in Layers.Keys.Where(id => !order.Contains(id)).ToList()) Layers.Remove(gone);
+        foreach (var bare in Layers.Where(l => l.Key != GroundLayerDef.BaseId && l.Value.Bare).Select(l => l.Key).ToList()) Layers.Remove(bare);
+        Compose(order);
+        if (Layers.Count == 1 && Layers.ContainsKey(GroundLayerDef.BaseId) && order.Contains(GroundLayerDef.BaseId)) Layers = null;
+    }
+
+    void Bared()
+    {
+        Array.Clear(Kind);
+        Array.Clear(Salt);
+        Array.Clear(Detail);
+    }
+
+    public bool PaintedOn(string layer) => Layers is { } layers ? layers.TryGetValue(layer, out var cells) && !cells.Bare : layer == GroundLayerDef.BaseId && Painted;
 
     public int ChunksAcross => (Cols + Chunk - 1) / Chunk;
     public int ChunksDown => (Rows + Chunk - 1) / Chunk;
@@ -288,7 +466,8 @@ public static class ReliefFiles
     public static IEnumerable<string> Files(string sha, ReliefIndex index) =>
         new[] { HeaderRel(sha) }.Concat(Chunks(index).Where(c => c.Length > 0).Distinct().Select(ChunkRel));
 
-    static IEnumerable<string> Chunks(ReliefIndex index) => index.Heights.Concat(index.Ground).Concat(index.Seeds ?? new()).Concat(index.Details ?? new());
+    static IEnumerable<string> Chunks(ReliefIndex index) =>
+        index.Heights.Concat(index.Ground).Concat(index.Seeds ?? new()).Concat(index.Details ?? new()).Concat((index.Layers ?? []).SelectMany(l => l.Ground.Concat(l.Seeds).Concat(l.Details)));
 
     public static string Sha(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
 
@@ -308,11 +487,27 @@ public static class ReliefFiles
             }
         if (seeds.Any(c => c.Length > 0)) index.Seeds = seeds;
         if (details.Any(c => c.Length > 0)) index.Details = details;
+        if (g.Layers is { } layers)
+            index.Layers = g.Order.Where(layers.ContainsKey).Concat(layers.Keys.Where(id => !g.Order.Contains(id)).Order(StringComparer.Ordinal))
+                .Select(id => LayerOf(packageDir, g, id, layers[id], written)).ToList();
         var header = Json.SerializeBytes(index);
         var sha = Sha(header);
         var path = Path.Combine(packageDir, Folder, sha + HeaderExt);
         if (!File.Exists(path)) { Json.WriteAtomic(path, header); written.Add(HeaderRel(sha)); }
         return (sha, written);
+    }
+
+    static LayerChunks LayerOf(string packageDir, ReliefGrid g, string id, GroundCells cells, List<string> written)
+    {
+        var chunks = new LayerChunks { Id = id };
+        for (int cy = 0; cy < g.ChunksDown; cy++)
+            for (int cx = 0; cx < g.ChunksAcross; cx++)
+            {
+                chunks.Ground.Add(Put(packageDir, ByteChunk(g, cells.Kind, cx, cy), written));
+                chunks.Seeds.Add(Put(packageDir, ByteChunk(g, cells.Salt, cx, cy), written));
+                chunks.Details.Add(Put(packageDir, ByteChunk(g, cells.Detail, cx, cy), written));
+            }
+        return chunks;
     }
 
     static string Put(string packageDir, byte[]? plain, List<string> written)
@@ -363,6 +558,9 @@ public static class ReliefFiles
         int chunks = ((index.Cols + ReliefGrid.Chunk - 1) / ReliefGrid.Chunk) * ((index.Rows + ReliefGrid.Chunk - 1) / ReliefGrid.Chunk);
         if (index.Heights.Count != chunks || index.Ground.Count != chunks || (index.Seeds?.Count ?? chunks) != chunks || (index.Details?.Count ?? chunks) != chunks)
             throw new InvalidDataException("the relief's chunk list does not match its size");
+        if (index.Layers is { } layers && (layers.Any(l => l.Ground.Count != chunks || l.Seeds.Count != chunks || l.Details.Count != chunks || !GroundLayerDef.FitId(l.Id))
+            || layers.Select(l => l.Id).Distinct().Count() != layers.Count))
+            throw new InvalidDataException("the relief's ground layers do not match its size");
         if (Chunks(index).Any(c => c.Length > 0 && !System.Text.RegularExpressions.Regex.IsMatch(c, "^[0-9a-f]{64}$"))) throw new InvalidDataException("the relief names a chunk wrongly");
         return index;
     }
@@ -381,7 +579,30 @@ public static class ReliefFiles
             }
         if (index.Details == null)
             for (int c = 0; c < g.Detail.Length; c++) g.Detail[c] = GroundKinds.DefaultLevels(g.Kind[c]);
+        if (index.Layers is { } layers) LoadLayers(g, layers, chunkPath);
         return g;
+    }
+
+    static void LoadLayers(ReliefGrid g, List<LayerChunks> layers, Func<string, string?> chunkPath)
+    {
+        const int Size = ReliefGrid.Chunk * ReliefGrid.Chunk;
+        foreach (var layer in layers)
+        {
+            var cells = g.Cells(layer.Id);
+            Array.Clear(cells.Kind);
+            Array.Clear(cells.Salt);
+            Array.Clear(cells.Detail);
+            int i = 0;
+            for (int cy = 0; cy < g.ChunksDown; cy++)
+                for (int cx = 0; cx < g.ChunksAcross; cx++, i++)
+                {
+                    if (layer.Ground[i].Length > 0) ReadBytes(g, cells.Kind, cx, cy, Chunk(layer.Ground[i], chunkPath, Size), (byte)(GroundKinds.All.Count - 1));
+                    if (layer.Seeds[i].Length > 0) ReadBytes(g, cells.Salt, cx, cy, Chunk(layer.Seeds[i], chunkPath, Size), byte.MaxValue);
+                    if (layer.Details[i].Length > 0) ReadBytes(g, cells.Detail, cx, cy, Chunk(layer.Details[i], chunkPath, Size), byte.MaxValue);
+                }
+        }
+        if (layers.All(l => l.Id != GroundLayerDef.BaseId)) g.Layers!.Remove(GroundLayerDef.BaseId);
+        g.Ordered(layers.Select(l => l.Id).ToList());
     }
 
     static byte[] Chunk(string sha, Func<string, string?> chunkPath, int size)

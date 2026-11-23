@@ -122,7 +122,7 @@ public class CrowdDayTests
         Assert.All(a.Residents, r => Assert.True(a.Places[r.Home].Use is CrowdUse.Home or CrowdUse.Barracks || r.Outsider && a.Places[r.Home].Outdoor));
         Assert.Contains(a.Residents, r => r.Work >= 0 && r.Entry.Calling != CrowdBaseline.Labourer);
         Assert.Contains(a.Residents, r => r.Entry.Band == E.Child);
-        Assert.Equal("modern", CrowdRoster.NationalityOf(g.Built[0], g.Sheets[0], new GameState { Lighting = { MapStyle = "modern" } }));
+        Assert.Equal("continental", CrowdRoster.NationalityOf(g.Built[0], g.Sheets[0], new GameState { Lighting = { MapStyle = "modern" } }));
     }
 
     [Fact]

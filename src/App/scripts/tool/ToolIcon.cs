@@ -132,6 +132,15 @@ public partial class ToolIcon : Control
             Line(5, 10, 15, 10);
             return;
         }
+        if (Kind is "lock" or "lock-open")
+        {
+            float shackle = Kind == "lock" ? 10f : 13.6f;
+            DrawColoredPolygon(new[] { P(4.5f, 9f), P(15.5f, 9f), P(15.5f, 17f), P(4.5f, 17f) }, _c);
+            DrawArc(P(shackle, 8.6f), 3.6f * _k, Mathf.Pi, Mathf.Tau, 16, _c, 1.6f * _k, antialiased: true);
+            Line(shackle - 3.6f, 8.6f, shackle - 3.6f, 9.2f, 1.6f);
+            Line(shackle + 3.6f, 8.6f, shackle + 3.6f, 9.2f, 1.6f);
+            return;
+        }
         if (Kind != "fill") return;
         Poly(4.5f, 8.5f, 10.5f, 2.5f, 16, 8, 10, 14);
         Line(6.5f, 6.5f, 12.5f, 12.5f, 1.1f);

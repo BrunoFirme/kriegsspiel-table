@@ -128,8 +128,11 @@ sealed class ReliefTool
     bool Filling => Paint == "fill";
     const string Span = "span";
 
-    bool Shaping => Paint is "rect" or "ellipse" or "polygon" or "route" or Span or Contour;
+    bool Shaping => Paint is "rect" or "ellipse" or "polygon" or "route" or Span or Contour or Line or Curve;
     bool Routing => Paint == "route";
+    public const string Line = "line", Curve = "curve";
+    bool Banding => Paint is Line or Curve;
+    bool Strung => Routing || Paint == Curve;
 
     public static double HeightUnit(SheetDef s) => s.Relief is { Length: > 0 } ? s.Height : 1;
 
@@ -141,6 +144,7 @@ sealed class ReliefTool
         else if (_corners != null) { Corner(g, twice); return; }
         if (!s.CanEdit(Layers.Umpire)) { _c.Say(NotYours); return; }
         if (!Scaled(s)) { _c.Say(GroundKinds.NeedsScale + "."); return; }
+        if (Painting && s.Relief.PaintBlocked) { _c.Say(s.Relief.Locked ? LockedWords : HiddenWords); return; }
         if (Target(s, _sheets, g) is not { } target) { _c.Say("Brush over a map sheet."); return; }
         if (Shaping)
         {
@@ -196,7 +200,7 @@ sealed class ReliefTool
     {
         if (Wanted() is not { } want) { DropPreview(); return; }
         if (_preview is { } had && (had.Sheet.Id != want.Sheet.Id || !had.Holds(_c.S))) DropPreview();
-        if ((_preview ??= ReliefPreview.Of(_c.S, want.Sheet)) is not { } p) return;
+        if ((_preview ??= ReliefPreview.Of(_c.S, want.Sheet, Painting)) is not { } p) return;
         p.Tick();
         if (want.Background) p.Work(want.Key, want.Make);
         else if (!Equals(want.Key, p.Shown) && Time.GetTicksMsec() - _previewedAt >= (Painting ? PaintEveryMs : SculptEveryMs))
@@ -224,14 +228,14 @@ sealed class ReliefTool
     List<Vec2>? Pending()
     {
         if (_corners == null) return null;
-        if (!Routing && Paint != "polygon") return _cursor is { } at && (at - _corners[0]).Length >= _overlay.Px(ShapeLeastPx) ? Outline(at) : null;
+        if (!Strung && Paint != "polygon") return _cursor is { } at && (at - _corners[0]).Length >= _overlay.Px(ShapeLeastPx) ? Outline(at) : null;
         if (!_overUi && _cursor is { } to) return Outline(to);
-        if (Routing) return new List<Vec2>(_corners);
+        if (Strung) return new List<Vec2>(_corners);
         return _corners.Count >= 3 ? new List<Vec2>(_corners) { _corners[0] } : null;
     }
 
     PreviewKey ShapeKey(SheetDef sheet, List<Vec2> outline) =>
-        new((sheet.Id, Cfg.ReliefMode, Paint, Current, Cfg.ReliefBrush, Cfg.ReliefFormHeight, Cfg.ReliefProfile, Cfg.ReliefSlopeRise, PerMetreOf(sheet)), outline.ToArray());
+        new((sheet.Id, Cfg.ReliefMode, Paint, Current, Cfg.ReliefBrush, Cfg.ReliefFormHeight, Cfg.ReliefProfile, Cfg.ReliefSlopeRise, PerMetreOf(sheet), Cfg.ReliefBand), outline.ToArray());
 
     Previewed? ContoursWanted()
     {
@@ -343,6 +347,7 @@ sealed class ReliefTool
         if (target.Relief is { Length: > 0 } && (existing = _c.S.Relief.Under(target)) == null) { _c.Say("The relief is still loading."); return false; }
         _sheet = Json.Clone(target);
         _draft = existing?.Copy() ?? Blank(target);
+        if (Painting) _c.S.Relief.Aim(_draft);
         _from = existing;
         _level = null;
         _run = 0;
@@ -363,6 +368,7 @@ sealed class ReliefTool
         byte kind = _c.S.Ground.KindAt(g);
         if (kind != GroundKinds.None && !GroundKinds.Brushes.Contains(kind)) return;
         Cfg.ReliefMode = "paint:" + GroundKinds.Painted(kind, _c.S.Ground.DetailAt(g));
+        if (kind == GroundKinds.Wood) Cfg.ReliefForest = GroundKinds.ForestOf(_c.S.Ground.DetailAt(g));
         Cfg.Save();
         Picked?.Invoke();
     }
@@ -385,8 +391,8 @@ sealed class ReliefTool
             else corners.Add(g);
             return;
         }
-        var back = Routing ? corners[^1] : corners[0];
-        bool enough = Routing || corners.Count >= 3;
+        var back = Strung ? corners[^1] : corners[0];
+        bool enough = Routing || corners.Count >= (Paint == Curve ? 2 : 3);
         if (enough && (twice || (g - back).Length <= _overlay.Px(CloseSnapPx))) Close(corners);
         else if (!twice) corners.Add(g);
     }
@@ -394,8 +400,8 @@ sealed class ReliefTool
     List<Vec2>? Outline(Vec2 at)
     {
         if (_corners == null) return null;
-        if (Routing || Paint == Contour) return new List<Vec2>(_corners) { at };
-        if (Paint == Span) return new List<Vec2> { _corners[0], at };
+        if (Strung || Paint == Contour) return new List<Vec2>(_corners) { at };
+        if (Paint is Span or Line) return new List<Vec2> { _corners[0], at };
         if (Paint == "polygon") return new List<Vec2>(_corners) { at, _corners[0] };
         var a = _corners[0];
         var b = Input.IsKeyPressed(Key.Shift) ? Polyline.Squared(a, at, _across) : at;
@@ -421,8 +427,9 @@ sealed class ReliefTool
             return;
         }
         if (SheetOf(id) is not { } target) { DropPreview(); return; }
-        if (Hand(target, ShapeKey(target, outline))) return;
+        if (!Refines(target) && Hand(target, ShapeKey(target, outline))) return;
         if (!Open(target)) { DropPreview(); return; }
+        if (Banding) Refine();
         if (Routing && !Forms(Cfg.ReliefMode) && _c.S.View.Calibration.UnitsPerMeter is not > 0) _c.Say(GroundKinds.NeedsScale + ".");
         Lay(Laid(_draft!, _sheet!, outline));
     }
@@ -431,11 +438,30 @@ sealed class ReliefTool
     {
         var uv = outline.Select(p => Ground.UvOf(sheet, p)).ToList();
         if (Forms(Cfg.ReliefMode)) return Formed(draft, sheet, uv);
+        if (Banding) return ReliefBrush.Band(draft, Course(sheet, outline), BandCells(sheet, draft), Current);
         if (!Routing) return ReliefBrush.Shape(draft, uv, Current);
         double metre = _c.S.View.Calibration.UnitsPerMeter ?? 0;
         if (metre <= 0) return CellBox.None;
         double cell = Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1);
         return GroundRoute.Lay(draft, Current, uv, Math.Clamp(Cfg.ReliefBrush, SmallestBrush, LargestBrush) / cell, cell / metre, HeightUnit(sheet) / metre);
+    }
+
+    List<(double u, double v)> Course(SheetDef sheet, List<Vec2> outline) =>
+        (Paint == Curve && outline.Count > 2 ? Polyline.Smooth(outline, false) : outline).Select(p => Ground.UvOf(sheet, p)).ToList();
+
+    double BandCells(SheetDef sheet, ReliefGrid draft) =>
+        Cfg.ReliefBand / 2 * (_c.S.View.Calibration.UnitsPerMeter ?? 0) / (Ground.FullWidth(sheet) / Math.Max(1, draft.Cols - 1));
+
+    bool Refines(SheetDef sheet) =>
+        Banding && (_c.S.Relief.Under(sheet) ?? Blank(sheet)) is var g && g.CanBeFiner() && BandCells(sheet, g) < ReliefBrush.LeastBandCells;
+
+    void Refine()
+    {
+        while (_draft!.CanBeFiner() && BandCells(_sheet!, _draft) < ReliefBrush.LeastBandCells)
+        {
+            _draft = _draft.Finer();
+            _c.S.Relief.Aim(_draft);
+        }
     }
 
     CellBox Formed(ReliefGrid draft, SheetDef sheet, List<(double u, double v)> uv)
@@ -593,7 +619,7 @@ sealed class ReliefTool
 
     public void Release()
     {
-        if (_corners != null && !Routing && Paint != "polygon" && Paint != Contour)
+        if (_corners != null && !Strung && Paint != "polygon" && Paint != Contour)
         {
             var at = _cursor ?? _corners[0];
             if ((at - _corners[0]).Length >= _overlay.Px(ShapeLeastPx) && Outline(at) is { } outline) Close(outline);
@@ -619,8 +645,11 @@ sealed class ReliefTool
         Commit(_c.S, sheet, grid, _from, (sha, c) => Shaped?.Invoke(sha, c), _c.Say);
     }
 
+    public const string LockedWords = "This ground layer is locked.", HiddenWords = "This ground layer is hidden.";
+
     public static void Commit(Session s, SheetDef sheet, ReliefGrid grid, ReliefGrid? from, Action<string, Command> share, Action<string> say)
     {
+        s.Relief.Settle(grid);
         var root = s.Store.Root;
         lock (SavingInOrder) _saving = _saving.ContinueWith(_ =>
         {
@@ -699,7 +728,7 @@ sealed class ReliefTool
             if (_corners == null || Outline(g ?? _cursor ?? _corners[^1]) is not { } outline) return;
             _overlay.RibbonPx(_overlay.Mesh, mat, outline, _overlay.Lift, 2f);
             if (Cfg.ReliefMode == HillMode && !Painting) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(_corners[0], (outline[^1] - _corners[0]).Length), _overlay.Lift, 2f);
-            if (Paint == "polygon" || Paint == Contour || Routing) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Routing ? _corners[^1] : _corners[0], _overlay.Px(CloseSnapPx)), _overlay.Lift, 2f);
+            if (Paint == "polygon" || Paint == Contour || Strung) _overlay.RibbonPx(_overlay.Mesh, mat, Ring(Strung ? _corners[^1] : _corners[0], _overlay.Px(CloseSnapPx)), _overlay.Lift, 2f);
             return;
         }
         if (g is not { } at || Filling) return;

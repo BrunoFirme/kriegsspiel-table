@@ -28,9 +28,9 @@ sealed class AgentBuiltTools
 
     static string LineNames => string.Join(", ", BuiltRoads.Roads.Except([Works.Trench, Works.Wire]));
 
-    const string CultureWords = "what it is built in: the name of a mix kept in the scenario, or a culture of the map's age (read_scenario lists both)";
-    const string BuildersWords = "a culture of the map's age that raises its walls and roofs", AdornersWords = "a culture of the map's age that gives its towers, domes and gateways";
-    const string QuarterWords = "a culture of the map's age that builds and adorns one quarter of it, or none";
+    const string CultureWords = "what it is built in: the name of a mix kept in the scenario, or a culture of any age (read_scenario lists both)";
+    const string BuildersWords = "a culture of any age that raises its walls and roofs", AdornersWords = "a culture of any age that gives its towers, domes and gateways";
+    const string QuarterWords = "a culture of any age that builds and adorns one quarter of it, or none";
     const string ShareWords = "how much of the place the quarter takes, 0.1 to 0.5 (0.25 if left out)";
 
     static Arg[] Cultured => [new Arg("culture", "string", CultureWords), new Arg("builders", "string", BuildersWords), new Arg("adorners", "string", AdornersWords),
@@ -53,7 +53,7 @@ sealed class AgentBuiltTools
                 new Arg("plan", "string", "settlement: one the culture offers of " + string.Join(", ", Plans.All) + " (the culture's own if left out)"),
                 new Arg("bastions", "number", "star fort: 4–8 (5 if left out)"), new Arg("outworks", "number", "star fort or redoubt: 0–1, none, a glacis, ravelins (0.5 if left out)"),
                 new Arg("castle_plan", "string", CastlePlanWords),
-                new Arg("class", "string", "building: its catalogue name, such as house, church, well, quay or amphitheatre (house if left out); one that does not fit the map's age is answered with those that do"),
+                new Arg("class", "string", "building: its catalogue name, such as house, church, well, quay or amphitheatre (house if left out), of any age"),
                 new Arg("length", "number", "building: its length along its front, map units (its usual length if left out)"),
                 new Arg("heading", "number", "fort or building: compass degrees it faces; settlement: the line of its main street where no road decides it"),
                 new Arg("seed", "number", "the same seed on the same ground lays the same place (random if left out)"),
@@ -102,7 +102,7 @@ sealed class AgentBuiltTools
         yield return new AgentTool("culture_mix", "Keeps a mix of cultures in the scenario under a name, as the Build panel's Add mix and Keep mix do: one culture lays a place out, others build and adorn it, and one may hold a quarter. " +
             "build_place, build_details and shape_built then take the name as culture, and read_scenario lists the mixes. With from, the mix is the one a built thing has; with remove, the name is taken off the list and places laid in it stay.",
             Args.Schema([new Arg("name", "string", "the mix's name on the Culture list", true), new Arg("from", "string", "a built thing's id (list_built) whose mix is kept"), .. Cultured.Skip(1),
-                new Arg("lays", "string", "a culture of the map's age that lays the place out"), new Arg("new_name", "string", "another name for a mix already kept"),
+                new Arg("lays", "string", "a culture of any age that lays the place out"), new Arg("new_name", "string", "another name for a mix already kept"),
                 new Arg("remove", "boolean", "take the mix off the list")]), CultureMix);
         yield return new AgentTool("edit_built",
             "Changes a built thing by hand, as Pick does (list_built with id numbers the parts and gives the wall's corners): " +
@@ -119,7 +119,7 @@ sealed class AgentBuiltTools
                 new Arg("cover", "string", "as tile, thatch, lead, mud"),
                 new Arg("points", Args.Points, "the stroke of fill, thin and the lamps: [[x, z], …]"), new Arg("radius", "number", "the stroke's radius, map units"),
                 new Arg("corner", "number", "the corner's number"), new Arg("name", "string", "name: empty for none"),
-                new Arg("culture", "string", "place: the part's culture of the map's age"), new Arg("wealth", "string", "place: poor, middling or rich"),
+                new Arg("culture", "string", "place: the part's culture, of any age"), new Arg("wealth", "string", "place: poor, middling or rich"),
                 new Arg("lives_on", "number", "place: 0–1, its living from the land; lays it again"), new Arg("state", "string", "place: peace or war"),
                 new Arg("held_by", "string", "place: the culture of the troops holding it"), new Arg("coat", "string", "place: their coat, #rrggbb or a colour name; usual for none")),
             EditBuilt);
@@ -137,7 +137,7 @@ sealed class AgentBuiltTools
         PlaceZones.HeldBy, PlaceZones.Coat];
     const string NoQuarter = "none";
 
-    static string CulturesOf(int epoch) => string.Join(", ", Manners.In(epoch).Select(Manners.Id));
+    static string CultureIds => string.Join(", ", Manners.ByAge.Select(Manners.Id));
 
     static bool Known(string? asked, int epoch, out int manner)
     {
@@ -146,7 +146,7 @@ sealed class AgentBuiltTools
         return manner >= 0;
     }
 
-    static IEnumerable<NamedMix> Mixes(Session s) => (s.View.Cultures ?? []).Where(mix => Manners.Named(Manners.Parse(mix.Code).Lays).Epoch == BuildTool.Epoch(s));
+    static IEnumerable<NamedMix> Mixes(Session s) => s.View.Cultures ?? [];
 
     static NamedMix? MixNamed(Session s, string? name) => Mixes(s).FirstOrDefault(kept => string.Equals(kept.Name, name?.Trim(), StringComparison.OrdinalIgnoreCase));
 
@@ -163,7 +163,7 @@ sealed class AgentBuiltTools
         }
         if (Known(asked, BuildTool.Epoch(s), out lays)) return null;
         var mixes = string.Join(", ", Mixes(s).Select(m => m.Name));
-        return $"culture is one of {CulturesOf(BuildTool.Epoch(s))}{(mixes.Length > 0 ? ", or a mix kept in the scenario: " + mixes : "")}.";
+        return $"culture is one of {CultureIds}{(mixes.Length > 0 ? ", or a mix kept in the scenario: " + mixes : "")}.";
     }
 
     static void Mixed(Manners.Mix mix, BuiltThing thing)
@@ -183,7 +183,7 @@ sealed class AgentBuiltTools
             if (a.Str(arg)?.Trim().ToLowerInvariant() is not { Length: > 0 } asked) continue;
             if (setting == Manners.Ward && asked == NoQuarter) thing.Settings[setting] = -1;
             else if (Known(asked, BuildTool.Epoch(s), out int side)) thing.Settings[setting] = side;
-            else return $"{arg} is one of {CulturesOf(BuildTool.Epoch(s))}{(setting == Manners.Ward ? ", or none" : "")}.";
+            else return $"{arg} is one of {CultureIds}{(setting == Manners.Ward ? ", or none" : "")}.";
         }
         if (a.Num("quarter_share") is { } share) thing.Settings[Manners.WardShare] = Math.Clamp(share, Manners.LeastWard, Manners.MostWard);
         return null;
@@ -196,8 +196,8 @@ sealed class AgentBuiltTools
 
     static string? Unfit(Session s, string cls, bool blocksOnly)
     {
-        var fitting = Catalogue.For(BuildTool.Ancient(s), blocksOnly, Modern(s), BuildTool.Epoch(s) == Manners.Medieval).SelectMany(section => section.Entries).Select(e => e.Id).ToList();
-        return fitting.Contains(cls) ? null : "one that fits the map's age: " + string.Join(", ", fitting) + ".";
+        var fitting = Catalogue.Every(blocksOnly).SelectMany(section => section.Entries).Select(e => e.Id).ToList();
+        return fitting.Contains(cls) ? null : "one of: " + string.Join(", ", fitting) + ".";
     }
 
     async Task<ToolResult> CultureMix(JsonElement a)
@@ -251,12 +251,12 @@ sealed class AgentBuiltTools
         else draft.Settings[Manners.Setting] = Manners.For(epoch, -1);
         if (a.Str("lays") is { Length: > 0 } lays)
         {
-            if (!Known(lays, epoch, out int laid)) return $"lays is one of {CulturesOf(epoch)}.";
+            if (!Known(lays, epoch, out int laid)) return $"lays is one of {CultureIds}.";
             draft.Settings[Manners.Setting] = laid;
         }
         if (Sided(s, a, null, draft) is { } refused) return refused;
         mix = Manners.MixOf(draft);
-        return Manners.Named(mix.Lays).Epoch == epoch ? null : "That mix is of another age than the map's.";
+        return null;
     }
 
     const string Move = "move", Turn = "turn", Size = "size", Stretch = "stretch", Keep = "keep", Free = "free", RemovePart = "remove_part", Fill = "fill", Thin = "thin", LampsOut = "lamps_out", LampsLit = "lamps_lit", WallCorner = "wall_corner", Gate = "gate", Name = "name", Look = "look", Place = "place";

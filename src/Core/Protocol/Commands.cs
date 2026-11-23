@@ -71,6 +71,11 @@ namespace KTable.Core.Protocol;
 [JsonDerivedType(typeof(RenameBoard), "RenameBoard")]
 [JsonDerivedType(typeof(RemoveBoard), "RemoveBoard")]
 [JsonDerivedType(typeof(MoveBoard), "MoveBoard")]
+[JsonDerivedType(typeof(AddGroundLayer), "AddGroundLayer")]
+[JsonDerivedType(typeof(RenameGroundLayer), "RenameGroundLayer")]
+[JsonDerivedType(typeof(LockGroundLayer), "LockGroundLayer")]
+[JsonDerivedType(typeof(RemoveGroundLayer), "RemoveGroundLayer")]
+[JsonDerivedType(typeof(MoveGroundLayer), "MoveGroundLayer")]
 [JsonDerivedType(typeof(Draw), "Draw")]
 [JsonDerivedType(typeof(EraseStroke), "EraseStroke")]
 [JsonDerivedType(typeof(LayBuilt), "LayBuilt")]
@@ -1005,6 +1010,63 @@ public sealed class RemoveBoard : Command
     public override IEnumerable<string> ScriptsToReload() => [];
 }
 public sealed class MoveBoard : Command
+{
+    public string Id { get; set; } = "";
+    public int Index { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+
+public sealed class AddGroundLayer : Command
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int? Index { get; set; }
+    public bool Locked { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RenameGroundLayer : Command
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class LockGroundLayer : Command
+{
+    public string Id { get; set; } = "";
+    public bool Locked { get; set; }
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class RemoveGroundLayer : Command
+{
+    public string Id { get; set; } = "";
+    public override Sender SentBy() => Sender.Umpire;
+    public override bool OnUndoStack() => true;
+    public override Shown ShownToObservers() => Shown.Table;
+    public override IEnumerable<(string Layer, string Id)> ZonePieces() => [];
+    public override IEnumerable<(string Layer, Vec2 Pos)> ZonePoints() => [];
+    public override IEnumerable<string> ScriptsToReload() => [];
+}
+public sealed class MoveGroundLayer : Command
 {
     public string Id { get; set; } = "";
     public int Index { get; set; }

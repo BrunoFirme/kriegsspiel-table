@@ -31,12 +31,9 @@ public class MedievalCultureTests
         Assert.Equal(Manners.Medieval, Manners.Age(MapStyles.Medieval));
         Assert.Equal("medieval", Manners.AgeName(Manners.Medieval));
         Assert.Equal(new[] { Manners.Gothic, Manners.Rus, Manners.Byzantine, Manners.Saracen, Manners.Mongol }.Order(), Manners.In(Manners.Medieval).Order());
-        Assert.Equal(Manners.Gothic, Manners.For(Manners.Medieval, Manners.Roman));
-        Assert.Equal(Manners.Rus, Manners.For(Manners.Medieval, Manners.Tribal));
-        Assert.Equal(Manners.Byzantine, Manners.For(Manners.Medieval, Manners.Persian));
-        Assert.Equal(Manners.Saracen, Manners.For(Manners.Medieval, Manners.Egyptian));
-        Assert.Equal(Manners.Mongol, Manners.For(Manners.Medieval, Manners.Chinese));
-        Assert.Equal(Manners.Continental, Manners.For(Manners.Later, Manners.Gothic));
+        Assert.Equal(Manners.Roman, Manners.For(Manners.Medieval, Manners.Roman));
+        Assert.Equal(Manners.Gothic, Manners.For(Manners.Later, Manners.Gothic));
+        Assert.Equal(Manners.Gothic, Manners.For(Manners.Medieval, -1));
     }
 
     [Fact]

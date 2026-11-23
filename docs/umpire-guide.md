@@ -535,9 +535,20 @@ ground.
 - It needs the map's scale: set it with **Map scale…** in the Map page, let **New blank ground…** set it, or add a GeoTIFF,
   `.asc` or `.hgt` with **Set the map's scale from the file** ticked. Painted ground is
   drawn at that scale, in the style's own hand, with its own natural signs, afresh every time it is painted. Wood
-  takes **Trees**, open wood to closed forest; the row shows under Density when wood is in hand. Roads, towns, plots
+  takes **Trees**, open wood to closed forest, and its forest under the ground types: **Regional** (the trees of its culture and place),
+  **Broadleaf**, **Conifer**, **Mixed**, **Birch** or **Palm & olive**, on the map and in the raised view alike. Roads, towns, plots
   and farms painted in an earlier version become built things when the host opens the map: the same roads and
   places, drawn afresh. One undo gives the painted ground back.
+- The **Paint** tab is laid out as **Draw** is: its tools (**Brush**, **Line**, **Curve**, **Area**, **Rectangle**, **Ellipse**, **Fill**
+  and **Rub out**), the **Ground** types with the choices of the one in hand, the rows, and **Layers**. **Line**, dragged, and
+  **Curve**, clicked along its bends, lay a band of the **Width** in metres with clean edges; a band too narrow for the
+  sheet's cells makes them finer first, as **Finer** does.
+- Each ground **layer** holds its own paint, and an upper layer's covers a lower's: paint a river on a layer above
+  and lock it, and grass, fields and woods painted on the layers below never touch it. Painting goes on the chosen
+  row; **Rub out** takes paint off that layer alone and shows what lies under it. The padlock locks a layer for
+  the table, so nothing paints or rubs it out; the eye hides its ground on your screen only. Drag a row's grip to
+  restack, **Remove** takes the layer and its ground off every sheet, and the eraser at the foot rubs out all it
+  holds. Each is one undo. Roads and towns laid with **Build** change the layer whose ground shows where they lie.
 - Painting: **Fill** colours the whole patch clicked, up to other ground types (a bare sheet whole), so a map starts
   with one click of grass; on its own kind it lays the patch afresh. While the scenario has a grid, **Stop at the grid**
   keeps it inside the cell clicked, so hexes are painted one by one. The **rectangle** and **ellipse** beside it paint a field, a wood or a pond in one drag
@@ -733,8 +744,8 @@ its course and let go, or **Shift+click** its corners and click the last; **Back
   and crates, hewn stone, cloth awnings, leafy crowns, rows in a garden.
 - **Culture** is what the place is built in: its plan, its houses and roofs, its great buildings, its fort,
   and how much of it farms. It is the first choice on **Town**, **Fortifications**, **Road**, **Building** and **Country**, since the rest of the page
-  follows it, and is chosen from a list with a sign for each; the map's style sets the age, and
-  each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
+  follows it, and is chosen from a list with a sign for each, grouped by age: every culture of every age is offered
+  whatever the map's style, a place keeps its culture when the style changes, and each age has five. **Ancient**: **Roman** (a red-tiled grid in a rectangle, forum, basilica, temple, baths, a theatre,
   an aqueduct, fountains at the corners), **Tribal** (fenced steadings of round thatched houses and raised granaries,
   a great house by the clearing, a cattle kraal), **Persian** (buff mud-brick courts, domes and wind towers along
   blind alleys, a columned hall on its terrace, qanat shafts running in from the hills, pigeon towers),
@@ -802,7 +813,7 @@ its course and let go, or **Shift+click** its corners and click the last; **Back
   painted iron, tar, mud, silt, lime or turf. A place fills itself with its trades (shops under awnings,
   bakery, tavern, cooper, wheelwright, potter with a kiln, weaver, fuller); a bastioned town has its
   barracks, parade, arsenal and magazine.
-  A picked place also has **Built by** and **Adorned by**, under **Mix**: another culture of the map's age can raise its
+  A picked place also has **Built by** and **Adorned by**, under **Mix**: another culture, of any age, can raise its
   walls and roofs, or give it what rises above them, while the first still lays it out. Every culture adorns
   in its own way, on the great building and on the hall: Ottoman minarets and lead domes, a North African
   square minaret and white dome, Chinese gate towers and a tiered roof, a Japanese tiered tower and shrine gate,
@@ -838,8 +849,9 @@ its course and let go, or **Shift+click** its corners and click the last; **Back
   first again. The settlement is laid again with houses round the block's edges, and its own streets and houses keep out
   of it; the rest of it is generated as before. Blocks show in brass while you draw or pick, never at the table.
   Pick a block and **Delete** takes it out, and the place is laid again.
-- **Building**: choose any thing from the catalogue, by section, each with its picture, from a house or
-  a well to a quay or an airstrip; an ancient map adds a round temple, mausoleum, triumphal arch,
+- **Building**: choose any thing from the catalogue, of any age, by section, each with its picture and those of one age
+  under its mark (**Ancient**, **Medieval and later** and so on), from a house or
+  a well to a quay or an airstrip; the ancient ones include a round temple, mausoleum, triumphal arch,
   colonnade, amphitheatre and circus. A click stands it, a drag gives its length and facing, or, with **From** on **Corner**, runs from one
   corner to the opposite one; **Q / E** and **= / −** turn and size the last one stood. The building just stood
   is picked: drag a side to move that side alone, a corner to move two, and in Pick choose **Wing** and drag out

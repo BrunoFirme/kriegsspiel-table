@@ -735,6 +735,61 @@
   reloads:     
   undo stack:  yes
   applied:     refused: no such board
+== AddGroundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Name-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse RemoveGroundLayer
+== RenameGroundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok; Name-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok; Name-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
+== LockGroundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
+== RemoveGroundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
+== MoveGroundLayer
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok; Id-x outside=ok
+  zone, none of mine: all inside=ok; Id-x outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
 == Draw
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -2286,6 +2341,61 @@
   reloads:     
   undo stack:  yes
   applied:     refused: no such board
+== AddGroundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     ok, inverse RemoveGroundLayer
+== RenameGroundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
+== LockGroundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
+== RemoveGroundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
+== MoveGroundLayer (empty)
+  sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
+  zone:        all inside=ok;  outside=ok
+  zone, none of mine: all inside=ok;  outside=ok
+  observer:    it
+  stranger:    nothing
+  umpires:     it it it
+  reloads:     
+  undo stack:  yes
+  applied:     refused: no such ground layer
 == Draw (empty)
   sent by:     Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
   in a batch:  Observer=no Umpire=yes LeadUmpire=yes HostUmpire=yes 99=no
@@ -3226,7 +3336,7 @@
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   zone:        all inside=ok; Turn 2 outside=ok
   zone, none of mine: all inside=ok; Turn 2 outside=ok
-  observer:    copy {"type":"LoadSave","name":"Turn 2","state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"seconds":56770956000,"turnSeconds":900},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":8,"actor":1,"at":99,"undoOf":0}
+  observer:    copy {"type":"LoadSave","name":"Turn 2","state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"seconds":56770956000,"turnSeconds":900},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"groundLayers":[{"id":"ground","name":"Ground"}],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":8,"actor":1,"at":99,"undoOf":0}
   stranger:    nothing
   umpires:     it it it
   reloads:     
@@ -3237,7 +3347,7 @@
   in a batch:  Observer=no Umpire=no LeadUmpire=no HostUmpire=no 99=no
   zone:        all inside=ok
   zone, none of mine: all inside=ok
-  observer:    copy {"type":"RestoreTurn","index":2,"state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"seconds":56770956000,"turnSeconds":900},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":7,"actor":1,"at":99,"undoOf":0}
+  observer:    copy {"type":"RestoreTurn","index":2,"state":{"format":1,"scenarioId":"","name":"t","packs":[],"sheets":[],"grid":{"kind":"none","pitch":10,"subdivisions":1,"color":"#1A1A2080"},"calibration":{"units":"m","perMetre":1,"unitName":"u"},"clock":{"turn":0,"seconds":56770956000,"turnSeconds":900},"lighting":{"sunEnergy":0.54,"ambient":0.9,"warmth":0.35,"shadows":true,"fromClock":false,"tableShade":0,"backdrop":"","mapStyle":"","contours":false,"snowLine":0,"streams":false,"sunFrom":145,"sunHeight":88},"wind":{"from":270,"strength":1},"visionRadius":40,"pointersAlwaysShown":false,"layers":{"umpire":[{"id":"p-1","def":"inf","pos":{"x":5,"z":5},"rotDeg":0,"stack":0,"state":0,"face":-1,"counters":{},"text":{},"attached":[],"scale":1,"y":0,"faceDown":false,"scriptState":"","locked":false,"noCollision":false,"physicalRoll":false,"notSticky":false,"notBoxSelected":false,"measuresMoves":false,"memo":"","widgets":[],"drawnOnState":0,"menuItems":[],"lines":[],"decals":[],"ui":[]}]},"drawings":{},"decals":{},"decalPalette":[],"boards":[],"groundLayers":[{"id":"ground","name":"Ground"}],"built":[],"dice":[],"nextId":1,"lastSeq":0,"zones":[],"scriptState":"","ui":[],"uiPictures":{},"hotkeys":[],"menuItems":[]},"seq":7,"actor":1,"at":99,"undoOf":0}
   stranger:    nothing
   umpires:     it it it
   reloads:     

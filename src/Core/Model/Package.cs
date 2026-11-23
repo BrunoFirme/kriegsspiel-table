@@ -854,6 +854,19 @@ public sealed class Stroke
     public const double MostSightBlur = 1;
 }
 
+public sealed class GroundLayerDef
+{
+    public const string BaseId = "ground", BaseName = "Ground";
+    const int LongestId = 64;
+
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Locked { get; set; }
+    public GroundLayerDef Clone() => (GroundLayerDef)MemberwiseClone();
+
+    public static bool FitId(string? id) => id is { Length: > 0 and <= LongestId } && id.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+}
+
 public sealed class BoardDef
 {
     public string Id { get; set; } = "";
@@ -970,6 +983,7 @@ public sealed class Scenario : IJsonOnDeserialized, IJsonOnSerializing
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public Dictionary<string, BoundRule>? EveryoneBounds { get; set; }
     public string? Briefing { get; set; }
     public List<BoardDef> Boards { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<GroundLayerDef>? GroundLayers { get; set; }
     public List<PieceInstance> UmpireBoard { get; set; } = new();
     public Dictionary<string, List<Stroke>> Drawings { get; set; } = new();
     public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();

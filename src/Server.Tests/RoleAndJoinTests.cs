@@ -75,7 +75,9 @@ public class RoleAndJoinTests
     }
 
     static IEnumerable<Command> BoardCommands() =>
-        [new AddBoard { Name = "Plan" }, new RenameBoard { Id = "b-000001", Name = "Ground" }, new MoveBoard { Id = "b-000001", Index = 0 }, new RemoveBoard { Id = "b-000001" }];
+        [new AddBoard { Name = "Plan" }, new RenameBoard { Id = "b-000001", Name = "Ground" }, new MoveBoard { Id = "b-000001", Index = 0 }, new RemoveBoard { Id = "b-000001" },
+            new AddGroundLayer { Id = "g-rivers", Name = "Rivers" }, new RenameGroundLayer { Id = "g-rivers", Name = "Streams" }, new LockGroundLayer { Id = "g-rivers", Locked = true },
+            new MoveGroundLayer { Id = "g-rivers", Index = 0 }, new RemoveGroundLayer { Id = "g-rivers" }];
 
     static IEnumerable<Command> AllCommands(string layer)
     {

@@ -122,17 +122,18 @@ static class AgentCultureTests
     }
 
     [NodeTest]
-    static async Task The_agent_builds_only_what_the_map_s_age_and_the_culture_offer(TestRunner r)
+    static async Task The_agent_builds_any_age_s_buildings_but_only_the_lines_and_plans_the_map_and_culture_offer(TestRunner r)
     {
         var (h, agent) = await AgentGroundTests.Ground(r);
         var (railError, rail) = await Ask(agent, "build_road", """{"points":[[-10,0],[10,0]],"class":"railway"}""");
         Check.That(railError && rail.Contains("chaussee"), "no railway is laid on an 18th-century map, and the lines it has are named: " + rail);
-        Check.That((await Ask(agent, "build_place", """{"kind":"building","x":0,"z":0,"class":"hangar"}""")).error, "nor a hangar stood");
+        var (hangarError, hangar) = await Ask(agent, "build_place", """{"kind":"building","x":0,"z":0,"class":"hangar"}""");
+        Check.That(!hangarError, "a hangar of the modern age stands on it all the same: " + hangar);
+        await Ask(agent, "remove_built", $$"""{"id":"{{Only(h, BuiltKinds.Building).Id}}"}""");
         var (planError, plan) = await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"plan":"wards"}""");
         Check.That(planError && plan.Contains(Plans.Offered(Manners.Continental)[0]), "a plan the culture has not is refused, and its own are named: " + plan);
         await Ask(agent, "build_place", """{"kind":"settlement","x":0,"z":0,"radius":8,"seed":7}""");
         var town = Only(h, BuiltKinds.Settlement).Id;
-        Check.That((await Ask(agent, "build_place", """{"kind":"building","class":"airstrip","x":1,"z":1}""")).error, "no airstrip is stood in an 18th-century town");
         Check.That((await Ask(agent, "shape_built", $$"""{"id":"{{town}}","plan":"wards"}""")).error, "nor is the town laid afresh in a plan its culture has not");
         await Ask(agent, "remove_built", $$"""{"id":"{{town}}"}""");
 

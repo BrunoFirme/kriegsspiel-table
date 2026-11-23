@@ -6,7 +6,7 @@ using KTable.Core.Model;
 
 namespace KTable.App;
 
-sealed class ReliefPanel : HudPart
+sealed partial class ReliefPanel : HudPart
 {
     const int Wide = 272, ToolsToARow = 3, GroundsToARow = 3, ValueWide = 46;
     public readonly FloatPanel Panel;
@@ -57,15 +57,6 @@ sealed class ReliefPanel : HudPart
     static readonly (string Key, string Text, string Tip)[] Profiles =
     {
         (ReliefForms.Round, "Round", "A rounded top"), (ReliefForms.Sharp, "Sharp", "Straight sides to a point or a crest"), (ReliefForms.Flat, "Flat", "A level top with short sides"),
-    };
-
-    static readonly (string Key, string Text, string Icon, string Tip)[] Paintings =
-    {
-        ("brush", "Brush", "", "Drag to paint"),
-        ("fill", "Fill", "", "Click to fill the patch of ground clicked, up to other ground types, or a bare sheet whole; on its own kind, lays it afresh"),
-        ("rect", "", "shape-rect", "Rectangle: drag across it · Shift for a square"),
-        ("ellipse", "", "shape-ellipse", "Ellipse: drag across it · Shift for a circle"),
-        ("polygon", "", "shape-polygon", "Polygon: click its corners, then the first again or double-click · Esc drops it"),
     };
 
     static readonly (string Key, string Text, string Tip)[] Tips = { ("round", "Round", "A round brush"), ("square", "Square", "A square brush"), ("diamond", "Diamond", "A brush set on its corner") };
@@ -256,71 +247,6 @@ sealed class ReliefPanel : HudPart
             Row(form, Cfg, "Up to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefUpTo, x => x <= 0 ? "off" : $"{x:0} m", x => Cfg.ReliefUpTo = Metres(x), "Raising stops at this height; off has no ceiling");
         else
             Row(form, Cfg, "Down to", 0, Settings.HighestReliefLimit, 1, Cfg.ReliefDownTo, x => $"{x:0} m", x => Cfg.ReliefDownTo = Metres(x), "Lowering stops at this height; 0 is the table");
-    }
-
-    void AddPaint()
-    {
-        var kinds = GroundKinds.Paints.ToList();
-        var rows = new VBoxContainer();
-        rows.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        for (int i = 0; i < kinds.Count; i += GroundsToARow)
-        {
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-            foreach (var kind in kinds.Skip(i).Take(GroundsToARow))
-            {
-                var mode = "paint:" + kind;
-                var b = GroundChip.Of(GroundKinds.Of(kind) ?? GroundKinds.None, Color.FromHtml(GroundKinds.PaintColor(kind, S.View.Lighting.MapStyle)), Title(kind), Cfg.ReliefMode == mode);
-                b.Pressed += () => Take(mode);
-                row.AddChild(b);
-            }
-            rows.AddChild(row);
-        }
-        _box.AddChild(rows);
-        _box.AddChild(Ui.Chips(new[] { ("paint:none", "Rub out", "Rub out painted ground") }, Cfg.ReliefMode, 1, Take, tools: true));
-        _box.AddChild(new HSeparator());
-        AddHowToPaint();
-        if (Cfg.ReliefPaint == "brush") AddTips();
-        var form = Ui.Form(Ui.PanelLabels);
-        if (Cfg.ReliefPaint == "brush")
-            Row(form, Cfg, "Size", 0.2, 400, 0.1, Cfg.ReliefBrush, x => $"{x:0.#} u", x => Cfg.ReliefBrush = (float)x, "The brush's radius in map units · = and − or Ctrl+wheel size it on the table", exp: true);
-        else if (Cfg.ReliefPaint == "ellipse") AddCircle(form);
-        Row(form, Cfg, "Density", 0.05, 1, 0.05, Cfg.ReliefDensity, x => $"{x * 100:0}%", x => Cfg.ReliefDensity = (float)x,
-            "How much of the ground takes it, in clumps: low for sparse wood or scattered rock; with Rub out it thins what is painted. Going over again adds no more");
-        if (GroundKinds.Of(Cfg.ReliefMode[6..]) is { } picked)
-        {
-            var parameters = GroundKinds.Parameters(picked);
-            for (int i = 0; i < parameters.Count; i++)
-            {
-                int which = i;
-                Row(form, Cfg, parameters[i].Name, 0, 100, 5, Cfg.ReliefDetail(picked, which), x => $"{x:0}%", x => Cfg.SetReliefDetail(picked, which, (int)x), parameters[i].Tip);
-            }
-        }
-        Ui.AlignForm(form);
-        _box.AddChild(form);
-        if (Cfg.ReliefPaint == "fill" && FillOptions.StopAtGrid(Cfg, S.View.Grid) is { } stops) _box.AddChild(stops);
-    }
-
-    void AddHowToPaint()
-    {
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        foreach (var (key, text, icon, tip) in Paintings)
-        {
-            var b = new Button
-            {
-                Text = text, ToggleMode = true, ButtonPressed = Cfg.ReliefPaint == key, FocusMode = Control.FocusModeEnum.None, TooltipText = tip,
-                SizeFlagsHorizontal = text.Length > 0 ? Control.SizeFlags.ExpandFill : Control.SizeFlags.Fill, CustomMinimumSize = Ui.Px(text.Length > 0 ? 0 : Ui.ChipHigh, Ui.ChipHigh),
-            };
-            if (icon.Length > 0) b.AddChild(new ToolIcon { Kind = icon });
-            b.Pressed += () =>
-            {
-                Cfg.ReliefPaint = key;
-                Take(Cfg.ReliefMode);
-            };
-            row.AddChild(b);
-        }
-        _box.AddChild(row);
     }
 
     static string Title(string name) => name.Length == 0 ? name : char.ToUpperInvariant(name[0]) + name[1..];

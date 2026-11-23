@@ -598,8 +598,16 @@ public static partial class Ui
 
     public const int SignPx = 18;
 
+    static string? HeadAt(System.Collections.Generic.IReadOnlyList<(int From, string Name)>? heads, int at)
+    {
+        if (heads == null) return null;
+        foreach (var (from, name) in heads)
+            if (from == at) return name;
+        return null;
+    }
+
     public static OptionButton Picker(System.Collections.Generic.IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick,
-        (string Text, string Tip, Action Do)? last = null, int groupFrom = -1)
+        (string Text, string Tip, Action Do)? last = null, int groupFrom = -1, System.Collections.Generic.IReadOnlyList<(int From, string Name)>? heads = null)
     {
         var button = new OptionButton { FocusMode = Control.FocusModeEnum.None, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, CustomMinimumSize = Ui.Px(0, ChipHigh) };
         button.AddThemeConstantOverride("icon_max_width", Ui.Px(SignPx));
@@ -607,9 +615,10 @@ public static partial class Ui
         var keys = new System.Collections.Generic.List<string?>();
         for (int i = 0; i < items.Count; i++)
         {
-            if (i == groupFrom)
+            string? head = HeadAt(heads, i);
+            if (i == groupFrom || head != null)
             {
-                button.AddSeparator();
+                button.AddSeparator(head ?? "");
                 keys.Add(null);
             }
             if (items[i].Sign is { } sign) button.AddIconItem(sign, items[i].Text);

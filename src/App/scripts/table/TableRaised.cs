@@ -465,7 +465,7 @@ sealed class TableRaised
     static int Dominant(List<BuiltPainter.Shape> shapes, string? style)
     {
         var counts = shapes.Where(sh => sh.Kind == PartKinds.Block).GroupBy(sh => RaisedLooks.Aged(style, sh.Manner)).OrderByDescending(g => g.Count()).FirstOrDefault();
-        return counts?.Key ?? Manners.For(Manners.Age(style), Manners.Continental);
+        return counts?.Key ?? Manners.Default(Manners.Age(style));
     }
 
     static Vector3 Across(SheetDef sheet, BuiltPainter.Shape shape)

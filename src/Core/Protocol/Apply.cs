@@ -54,6 +54,7 @@ public static partial class StateMachine
             case Draw or EraseStroke or LayBuilt or SetBuilt or RemoveBuilt: return ApplyDrawn(g, c, ref inverse);
             case StampDecal or RemoveDecal or SetDecalPalette: return ApplyDecals(g, c, ref inverse);
             case AddBoard or RenameBoard or RemoveBoard or MoveBoard: return BoardEdits.Apply(g, c, ref inverse);
+            case AddGroundLayer or RenameGroundLayer or LockGroundLayer or RemoveGroundLayer or MoveGroundLayer: return GroundLayerEdits.Apply(g, c, ref inverse);
             case RollDice rd: return ApplyRollDice(g, rd);
             case SetClock or AdvanceClock or StepClock or RunClock or SetTimer or ClearTimer or SetClockSteps or SetCalendar or SetClockApart:
                 return ClockEdits.Apply(g, c, ref inverse);

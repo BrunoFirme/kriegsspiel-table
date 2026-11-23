@@ -53,33 +53,47 @@ static class PartPalette
         return b;
     }
 
-    public static VBoxContainer Of(bool ancient, bool blocksOnly, string open, string chosen, int style, int manner, Func<string, string?> named, Action<string> turn, Action<string> pick)
+    public static VBoxContainer Of(bool blocksOnly, string open, string chosen, int style, int manner, Func<string, string?> named, Action<string> turn, Action<string> pick)
     {
-        var sections = Catalogue.For(ancient, blocksOnly, Manners.Named(manner).Epoch == Manners.Modern, Manners.Named(manner).Epoch == Manners.Medieval).ToList();
+        var sections = Catalogue.Every(blocksOnly).ToList();
         var shown = sections.FirstOrDefault(s => s.Id == open) ?? sections.FirstOrDefault(s => s.Entries.Any(e => e.Id == chosen)) ?? sections[0];
         var box = new VBoxContainer();
         box.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
         int rows = (sections.Count + MostLinksToARow - 1) / MostLinksToARow, linksToARow = (sections.Count + rows - 1) / rows;
         for (int i = 0; i < sections.Count; i += linksToARow)
             box.AddChild(Ui.Links(sections.Skip(i).Take(linksToARow).Select(s => (s.Name, s.Id == shown.Id, s.Tip, (Action)(() => turn(s.Id)))).ToList()));
-        for (int i = 0; i < shown.Entries.Count; i += ToARow)
+        foreach (var era in shown.Entries.GroupBy(e => e.Era))
         {
-            var row = new HBoxContainer();
-            row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-            for (int k = i; k < i + ToARow; k++)
+            var entries = era.ToList();
+            if (Catalogue.EraName(era.Key) is { } name) box.AddChild(EraMark(name));
+            for (int i = 0; i < entries.Count; i += ToARow)
             {
-                if (k >= shown.Entries.Count)
+                var row = new HBoxContainer();
+                row.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+                for (int k = i; k < i + ToARow; k++)
                 {
-                    row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-                    continue;
+                    if (k >= entries.Count)
+                    {
+                        row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+                        continue;
+                    }
+                    var entry = entries[k];
+                    var tile = Tile(entry, named(entry.Id) ?? entry.Name, entry.Id == chosen, style, manner);
+                    tile.Pressed += () => pick(entry.Id);
+                    row.AddChild(tile);
                 }
-                var entry = shown.Entries[k];
-                var tile = Tile(entry, named(entry.Id) ?? entry.Name, entry.Id == chosen, style, manner);
-                tile.Pressed += () => pick(entry.Id);
-                row.AddChild(tile);
+                box.AddChild(row);
             }
-            box.AddChild(row);
         }
         return box;
     }
+
+    static Label EraMark(string name)
+    {
+        var mark = new Label { Text = name, Modulate = Ui.Muted };
+        mark.AddThemeFontSizeOverride("font_size", Ui.Px(EraFont));
+        return mark;
+    }
+
+    const int EraFont = 11;
 }

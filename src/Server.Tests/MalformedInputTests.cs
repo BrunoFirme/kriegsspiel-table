@@ -105,6 +105,14 @@ public class MalformedInputTests
             t.Server.Handle(Table.Host, new MoveBoard { Id = "b-000001", Index = int.MaxValue });
             t.Server.Handle(Table.Host, new AddBoard { Name = null! });
         },
+        ["null and far-off ground layers"] = t =>
+        {
+            t.Server.Handle(Table.Host, new AddGroundLayer { Id = null!, Name = null! });
+            t.Server.Handle(Table.Host, new RenameGroundLayer { Id = null!, Name = null! });
+            t.Server.Handle(Table.Host, new LockGroundLayer { Id = null! });
+            t.Server.Handle(Table.Host, new MoveGroundLayer { Id = "ground", Index = int.MaxValue });
+            t.Server.Handle(Table.Host, new RemoveGroundLayer { Id = "ground" });
+        },
         ["a null zone"] = t => t.Server.Handle(Table.Lead, new SetZone { Zone = null! }),
         ["a zone with no outline, then an umpire moves"] = t =>
         {
@@ -290,6 +298,7 @@ public class MalformedInputTests
     [InlineData("draw through NaN")]
     [InlineData("erase a null stroke id")]
     [InlineData("rename and remove a null board")]
+    [InlineData("null and far-off ground layers")]
     [InlineData("a null zone")]
     [InlineData("a zone with no outline, then an umpire moves")]
     [InlineData("a zone with a NaN corner")]
@@ -466,6 +475,11 @@ public class MalformedInputTests
 
     [Theory]
     [InlineData("AddBoard")]
+    [InlineData("AddGroundLayer")]
+    [InlineData("RenameGroundLayer")]
+    [InlineData("LockGroundLayer")]
+    [InlineData("MoveGroundLayer")]
+    [InlineData("RemoveGroundLayer")]
     [InlineData("AddPack")]
     [InlineData("AddSheet")]
     [InlineData("AdvanceClock")]

@@ -1,4 +1,4 @@
-format 67
+format 68
 type AccessChanged object
   access: GameAccess
 type AddBoard object
@@ -9,6 +9,16 @@ type AddBoard object
   name: string
   seq: long
   sight: bool
+  undoFrom: long
+  undoOf: long
+type AddGroundLayer object
+  actor: long
+  at: long
+  id: string
+  index: int?
+  locked: bool
+  name: string
+  seq: long
   undoFrom: long
   undoOf: long
 type AddPack object
@@ -181,6 +191,7 @@ type ClockTime object
 type Command abstract
   discriminator type unknown=FailSerialization
   derived AddBoard = AddBoard
+  derived AddGroundLayer = AddGroundLayer
   derived AddPack = AddPack
   derived AddSheet = AddSheet
   derived AdvanceClock = AdvanceClock
@@ -203,8 +214,10 @@ type Command abstract
   derived Hotline = Hotline
   derived LayBuilt = LayBuilt
   derived LoadSave = LoadSave
+  derived LockGroundLayer = LockGroundLayer
   derived LockSheet = LockSheet
   derived MoveBoard = MoveBoard
+  derived MoveGroundLayer = MoveGroundLayer
   derived MovePiece = MovePiece
   derived MoveSheet = MoveSheet
   derived Note = Note
@@ -220,10 +233,12 @@ type Command abstract
   derived RemoveBoundLayer = RemoveBoundLayer
   derived RemoveBuilt = RemoveBuilt
   derived RemoveDecal = RemoveDecal
+  derived RemoveGroundLayer = RemoveGroundLayer
   derived RemovePlace = RemovePlace
   derived RemoveSheet = RemoveSheet
   derived RemoveZone = RemoveZone
   derived RenameBoard = RenameBoard
+  derived RenameGroundLayer = RenameGroundLayer
   derived RenameSheet = RenameSheet
   derived ReportSelection = ReportSelection
   derived RestampCrowdOrder = RestampCrowdOrder
@@ -597,6 +612,7 @@ type GameState object
   everyoneBounds: Dictionary<string,BoundRule>
   format: int
   grid: GridDef
+  groundLayers: List<GroundLayerDef>
   hotkeys: List<HotkeyDef>
   lastSeq: long
   layers: Dictionary<string,List<PieceInstance>>
@@ -660,6 +676,10 @@ type GridDef object
   pitch: double
   snap: bool
   subdivisions: int
+type GroundLayerDef object
+  id: string
+  locked: bool
+  name: string
 type HoldPiece object
   actor: long
   at: long
@@ -798,6 +818,7 @@ type List<DieFace> list of DieFace
 type List<DressRule> list of DressRule
 type List<GameTimer> list of GameTimer
 type List<Garment> list of Garment
+type List<GroundLayerDef> list of GroundLayerDef
 type List<HotkeyDef> list of HotkeyDef
 type List<LightDef> list of LightDef
 type List<LineDef> list of LineDef
@@ -846,6 +867,14 @@ type LoadSave object
   name: string
   seq: long
   state: GameState
+  undoFrom: long
+  undoOf: long
+type LockGroundLayer object
+  actor: long
+  at: long
+  id: string
+  locked: bool
+  seq: long
   undoFrom: long
   undoOf: long
 type LockSheet object
@@ -924,6 +953,14 @@ type MoonDef object
   name: string
   phaseAtStart: double
 type MoveBoard object
+  actor: long
+  at: long
+  id: string
+  index: int
+  seq: long
+  undoFrom: long
+  undoOf: long
+type MoveGroundLayer object
   actor: long
   at: long
   id: string
@@ -1374,6 +1411,13 @@ type RemoveDecal object
   seq: long
   undoFrom: long
   undoOf: long
+type RemoveGroundLayer object
+  actor: long
+  at: long
+  id: string
+  seq: long
+  undoFrom: long
+  undoOf: long
 type RemovePlace object
   actor: long
   at: long
@@ -1396,6 +1440,14 @@ type RemoveZone object
   undoFrom: long
   undoOf: long
 type RenameBoard object
+  actor: long
+  at: long
+  id: string
+  name: string
+  seq: long
+  undoFrom: long
+  undoOf: long
+type RenameGroundLayer object
   actor: long
   at: long
   id: string
@@ -1539,6 +1591,7 @@ type Scenario object
   everyoneBounds: Dictionary<string,BoundRule>
   format: int
   grid: GridDef
+  groundLayers: List<GroundLayerDef>
   id: string
   lighting: Lighting
   name: string

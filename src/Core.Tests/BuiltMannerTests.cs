@@ -28,7 +28,7 @@ public class BuiltMannerTests
     }
 
     [Fact]
-    public void A_place_keeps_the_manner_it_was_laid_in_and_an_ancient_map_takes_only_ancient_manners()
+    public void A_place_keeps_the_manner_it_was_laid_in_whatever_the_map_s_age()
     {
         foreach (int manner in Manners.All.Select(m => m.Number))
         {
@@ -36,10 +36,12 @@ public class BuiltMannerTests
             Assert.Equal(manner, Manners.Of(town));
             Assert.Equal(manner, Manners.Of(BuiltThings.Remade(Site(Manners.Continental), town, 9)));
         }
-        Assert.Equal(Manners.Tribal, Manners.For(Manners.Ancient, Manners.Northern));
-        Assert.Equal(Manners.American, Manners.For(Manners.Later, Manners.Egyptian));
-        Assert.Equal(Manners.Tribal, Manners.For(Manners.Ancient, Manners.Tribal));
-        Assert.Equal(Manners.Soviet, Manners.For(Manners.Modern, Manners.Tribal));
+        Assert.Equal(Manners.Northern, Manners.For(Manners.Ancient, Manners.Northern));
+        Assert.Equal(Manners.Egyptian, Manners.For(Manners.Later, Manners.Egyptian));
+        Assert.Equal(Manners.Tribal, Manners.For(Manners.Modern, Manners.Tribal));
+        Assert.Equal(Manners.Roman, Manners.For(Manners.Ancient, -1));
+        Assert.Equal(Manners.Western, Manners.For(Manners.Modern, -1));
+        Assert.Equal(Manners.All.Count, Manners.ByAge.Distinct().Count());
         foreach (int epoch in new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern })
         {
             var five = Manners.In(epoch).ToList();
@@ -52,14 +54,14 @@ public class BuiltMannerTests
     }
 
     [Fact]
-    public void A_place_is_laid_out_built_and_adorned_by_cultures_of_one_age()
+    public void A_place_is_laid_out_built_and_adorned_by_cultures_of_any_age()
     {
         var pure = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman } };
         Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Roman, Manners.Roman), Manners.SidesOf(pure));
         var mixed = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Egyptian, [Manners.Adorners] = Manners.Tribal } };
         Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Egyptian, Manners.Tribal), Manners.SidesOf(mixed));
         var across = new BuiltThing { Settings = { [Manners.Setting] = Manners.Roman, [Manners.Builders] = Manners.Northern, [Manners.Adorners] = Manners.Soviet } };
-        Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Roman, Manners.Roman), Manners.SidesOf(across));
+        Assert.Equal(new Manners.Sides(Manners.Roman, Manners.Northern, Manners.Soviet), Manners.SidesOf(across));
         var town = Town(Manners.Roman);
         town.Settings[Manners.Builders] = Manners.Egyptian;
         town.Settings[Manners.Adorners] = Manners.Egyptian;
@@ -105,11 +107,14 @@ public class BuiltMannerTests
         Assert.Equal(mix, Manners.MixOf(BuiltThings.Remade(Site(Manners.Roman), town, 9)));
         var later = Town(Manners.Continental);
         mix.Onto(later);
-        Assert.True(Manners.MixOf(later).Pure);
+        Assert.Equal((Manners.Egyptian, Manners.Tribal, Manners.Persian), (Manners.MixOf(later).Builds, Manners.MixOf(later).Adorns, Manners.MixOf(later).Ward));
         town.Settings[Manners.WardShare] = 0.9;
         Assert.Equal(Manners.MostWard, Manners.MixOf(town).Share);
         town.Settings[Manners.Ward] = Manners.Ottoman;
+        Assert.Equal(Manners.Ottoman, Manners.MixOf(town).Ward);
+        town.Settings[Manners.Ward] = 99;
         Assert.Equal(-1, Manners.MixOf(town).Ward);
+        Assert.Equal((Manners.Gothic, Manners.Soviet), (Manners.Parse("gothic+soviet+soviet++0").Lays, Manners.Parse("gothic+soviet+soviet++0").Builds));
     }
 
     const int OnceEnglish = 1, OnceSouthern = 3;

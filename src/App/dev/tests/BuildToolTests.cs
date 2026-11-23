@@ -833,10 +833,17 @@ static class BuildToolTests
     const int OnceEnglish = 1;
 
     [NodeTest]
-    static async Task The_Culture_list_has_a_sign_and_a_name_for_each_culture_of_the_map_s_age(TestRunner r)
+    static async Task The_Culture_list_has_a_sign_and_a_name_for_each_culture_under_its_age(TestRunner r)
     {
         await r.Frame();
-        foreach (int epoch in new[] { Manners.Ancient, Manners.Medieval, Manners.Later, Manners.Modern })
+        var all = BuildPanel.AllCultures();
+        var grouped = BuildPanel.CulturePicker(all, all[0].Key, _ => { });
+        r.AddChild(grouped);
+        await r.Frame();
+        var heads = Enumerable.Range(0, grouped.ItemCount).Where(grouped.IsItemSeparator).Select(grouped.GetItemText).ToList();
+        Check.That(heads.SequenceEqual(Manners.Ages.Select(Manners.AgeTitle)) && grouped.ItemCount == all.Length + heads.Count, "every culture is listed under its age: " + string.Join(", ", heads));
+        grouped.QueueFree();
+        foreach (int epoch in Manners.Ages)
         {
             string picked = "";
             var cultures = Manners.In(epoch).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();

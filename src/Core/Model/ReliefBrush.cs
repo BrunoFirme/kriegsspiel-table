@@ -101,6 +101,16 @@ public static class ReliefBrush
     {
         byte laid = GroundKinds.Laid(g.Kind[i], b.Kind);
         bool took = laid == b.Kind || laid == GroundKinds.Bridge;
+        if (g.Painting is { } layer)
+        {
+            if (!took) return;
+            bool cleared = laid == GroundKinds.None;
+            layer.Kind[i] = laid;
+            layer.Salt[i] = cleared ? (byte)0 : b.Salt;
+            layer.Detail[i] = cleared ? (byte)0 : b.Detail;
+            g.ComposeCell(i);
+            return;
+        }
         g.Kind[i] = laid;
         if (!took) return;
         bool bare = laid == GroundKinds.None;
@@ -172,9 +182,10 @@ public static class ReliefBrush
     {
         int i = y * g.Cols + x;
         if (!GroundScatter.Takes(x, y, b.Kind, b.Density)) return false;
-        byte kind = g.Kind[i], salt = g.Salt[i], detail = g.Detail[i];
+        var held = g.Painting ?? new GroundCells(g.Kind, g.Salt, g.Detail);
+        byte kind = held.Kind[i], salt = held.Salt[i], detail = held.Detail[i];
         Mark(g, i, b);
-        return g.Kind[i] != kind || g.Salt[i] != salt || g.Detail[i] != detail;
+        return held.Kind[i] != kind || held.Salt[i] != salt || held.Detail[i] != detail;
     }
 
     public static double Falloff(double d, double hardness = 0)
@@ -244,6 +255,39 @@ public static class ReliefBrush
     }
 
     const double FlowStepOfARadius = 0.5;
+
+    public const double LeastBandCells = 1.5;
+
+    public static CellBox Band(ReliefGrid g, IReadOnlyList<(double u, double v)> points, double halfCells, Brush b)
+    {
+        if (points.Count == 0) return CellBox.None;
+        var pts = points.Select(p => (x: p.u * (g.Cols - 1), y: p.v * (g.Rows - 1))).ToList();
+        if (pts.Count == 1) pts.Add(pts[0]);
+        double half = Math.Max(0.5, halfCells), flowStep = Math.Max(1, half * 2 * FlowStepOfARadius);
+        bool flows = b.Kind == GroundKinds.Water && !GroundKinds.IsSea(b.Detail);
+        var box = CellBox.None;
+        var laid = new HashSet<int>();
+        double run = 0;
+        for (int s = 0; s + 1 < pts.Count; s++)
+        {
+            var (ax, ay) = pts[s];
+            var (bx, by) = pts[s + 1];
+            double dx = bx - ax, dy = by - ay, length = Math.Sqrt(dx * dx + dy * dy);
+            int x0 = Math.Max(0, (int)Math.Floor(Math.Min(ax, bx) - half)), x1 = Math.Min(g.Cols - 1, (int)Math.Ceiling(Math.Max(ax, bx) + half));
+            int y0 = Math.Max(0, (int)Math.Floor(Math.Min(ay, by) - half)), y1 = Math.Min(g.Rows - 1, (int)Math.Ceiling(Math.Max(ay, by) + half));
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    double t = length <= 0 ? 0 : Math.Clamp(((x - ax) * dx + (y - ay) * dy) / (length * length), 0, 1);
+                    double ox = x - (ax + dx * t), oy = y - (ay + dy * t);
+                    if (ox * ox + oy * oy > half * half || !laid.Add(y * g.Cols + x)) continue;
+                    var at = flows ? b with { Detail = GroundKinds.Flowing(b.Detail, (int)((run + length * t) / flowStep)) } : b;
+                    if (Lay(g, x, y, at)) box = box.Union(new CellBox(x, y, x, y));
+                }
+            run += length;
+        }
+        return box;
+    }
 
     public static double Run(ReliefGrid g, (double u, double v) from, (double u, double v) to)
     {

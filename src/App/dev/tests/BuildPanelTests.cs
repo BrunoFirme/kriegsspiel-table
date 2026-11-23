@@ -121,12 +121,12 @@ static class BuildPanelTests
     static async Task Add_mix_at_the_foot_of_the_Culture_list_asks_the_mix_alone_and_Save_mix_lays_places_in_it(TestRunner r)
     {
         var p = await Open(r);
-        int cultures = Manners.In(Manners.Later).Count();
+        int cultures = Manners.All.Count + Manners.Ages.Count;
         Check.That(p.Culture.ItemCount == cultures + 2 && p.Culture.GetItemText(p.Culture.ItemCount - 1) == "Add mix…", $"the Culture list ends with Add mix: {p.Culture.ItemCount} items");
         p.Culture.EmitSignal(OptionButton.SignalName.ItemSelected, p.Culture.ItemCount - 1);
         await r.Frames(2);
         Check.That(p.Rows.SequenceEqual(["Culture", "Built by", "Adorned by", "Quarter", "Name"]), "the mix is asked alone: " + string.Join(", ", p.Rows));
-        Check.That(p.Culture.ItemCount == cultures, "a mix is made of the age's own cultures");
+        Check.That(p.Culture.ItemCount == cultures, "a mix is made of any culture of any age");
         Check.That(p.Faults.Length == 0, p.Faults);
         p.Named("Country").EmitSignal(BaseButton.SignalName.Pressed);
         await r.Frames(2);
@@ -136,7 +136,7 @@ static class BuildPanelTests
         p.Culture.EmitSignal(OptionButton.SignalName.ItemSelected, p.Culture.ItemCount - 1);
         await r.Frames(2);
         var builders = All<OptionButton>(p.Body)[1];
-        builders.EmitSignal(OptionButton.SignalName.ItemSelected, builders.Selected == 0 ? 1 : 0);
+        builders.EmitSignal(OptionButton.SignalName.ItemSelected, Index(builders, "Northern"));
         await r.Frames(2);
         p.Type("March");
         p.Named("Save mix").EmitSignal(BaseButton.SignalName.Pressed);
@@ -167,7 +167,7 @@ static class BuildPanelTests
             "the picked town's rows: " + string.Join(", ", p.Rows));
         Check.That(p.Heads.SequenceEqual(["Life", "Wall", "Mix"]), "its sections: " + string.Join(", ", p.Heads));
         var builders = p.Picker("Built by");
-        builders.EmitSignal(OptionButton.SignalName.ItemSelected, builders.Selected == 0 ? 1 : 0);
+        builders.EmitSignal(OptionButton.SignalName.ItemSelected, Index(builders, "Northern"));
         await r.Frames(3);
         p.Relief.Rebuild();
         Check.That(p.Rows.TakeLast(2).SequenceEqual(["Quarter", "Mix name"]) && p.Has("Keep mix") && !p.Has("Remove mix"), "a mixed place asks a name to keep its mix: " + string.Join(", ", p.Rows));

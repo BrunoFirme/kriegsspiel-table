@@ -32,6 +32,7 @@ public static class BoardEdits
     {
         var b = g.Boards.FirstOrDefault(x => x.Id == nb.Id);
         if (b == null) return "no such board";
+        if (string.IsNullOrWhiteSpace(nb.Name)) return "a layer needs a name";
         inverse = new RenameBoard { Id = b.Id, Name = b.Name };
         b.Name = nb.Name;
         return null;

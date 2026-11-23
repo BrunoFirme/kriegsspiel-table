@@ -17,6 +17,7 @@ public sealed class Session : ClientSession
         {
             Built = id => View.Built.FindAll(b => b.Sheet == id),
             UnitsPerMetre = () => View.BuiltPerMetre ?? 0,
+            GroundLayers = () => View.GroundLayers,
         };
     }
 

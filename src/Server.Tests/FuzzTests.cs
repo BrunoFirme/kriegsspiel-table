@@ -32,7 +32,7 @@ public class FuzzTests
         {
             "spawn", "move", "delete", "state", "counter", "text", "label", "note", "tint", "lock", "scale", "attach", "detach", "flip",
             "addsheet", "movesheet", "locksheet", "renamesheet", "removesheet", "cropsheet", "zone", "removezone", "draw", "erase",
-            "addboard", "renameboard", "removeboard", "moveboard", "dice", "dicepieces", "clock", "advance", "batch",
+            "addboard", "renameboard", "removeboard", "moveboard", "addground", "lockground", "moveground", "removeground", "dice", "dicepieces", "clock", "advance", "batch",
         };
 
         public Command Next(bool zones = true, bool batch = true)
@@ -118,6 +118,10 @@ public class FuzzTests
                 case "renameboard": return boards.Count == 0 ? null : new RenameBoard { Id = Pick(boards).Id, Name = Text() };
                 case "removeboard": return boards.Count == 0 ? null : new RemoveBoard { Id = Pick(boards).Id };
                 case "moveboard": return boards.Count == 0 ? null : new MoveBoard { Id = Pick(boards).Id, Index = Rng.Next(-1, boards.Count + 1) };
+                case "addground": return new AddGroundLayer { Name = Coin() ? Text() : "", Index = Rng.Next(-1, 3) };
+                case "lockground": return _s.State.GroundLayers.Count == 0 ? null : new LockGroundLayer { Id = Pick(_s.State.GroundLayers).Id, Locked = Coin() };
+                case "moveground": return _s.State.GroundLayers.Count == 0 ? null : new MoveGroundLayer { Id = Pick(_s.State.GroundLayers).Id, Index = Rng.Next(-1, _s.State.GroundLayers.Count + 1) };
+                case "removeground": return _s.State.GroundLayers.Count == 0 ? null : new RemoveGroundLayer { Id = Pick(_s.State.GroundLayers).Id };
                 case "dice": return new RollDice { Sides = Pick(new[] { 6, 10, 20 }), Count = Rng.Next(1, 4), Label = Text() };
                 case "dicepieces":
                 {

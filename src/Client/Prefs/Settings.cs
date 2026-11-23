@@ -207,7 +207,11 @@ public sealed class Settings
     public string ReliefTip { get; set; } = "round";
     public Dictionary<string, int[]> ReliefDetails { get; set; } = new();
     public BuildPrefs Build { get; set; } = new();
-    public static readonly string[] ReliefPaintings = { "brush", "fill", "rect", "ellipse", "polygon" };
+    public static readonly string[] ReliefPaintings = { "brush", "line", "curve", "polygon", "rect", "ellipse", "fill" };
+
+    public const float UsualBand = 20, NarrowestBand = 0.5f, WidestBand = 5000;
+
+    public float ReliefBand { get; set; } = UsualBand;
 
     public int ReliefDetail(byte kind, int which)
     {
@@ -223,7 +227,13 @@ public sealed class Settings
         ReliefDetails[GroundKinds.Name(kind)] = levels;
     }
 
-    public byte ReliefLevels(byte kind) => GroundKinds.Levels(ReliefDetail(kind, 0), ReliefDetail(kind, 1));
+    public int ReliefForest { get; set; }
+
+    public byte ReliefLevels(byte kind)
+    {
+        byte levels = GroundKinds.Levels(ReliefDetail(kind, 0), ReliefDetail(kind, 1));
+        return kind == GroundKinds.Wood ? GroundKinds.WithForest(levels, ReliefForest) : levels;
+    }
     public double FormationGap { get; set; } = KTable.Client.Hand.Formations.DefaultGap;
     public double? FormationDistance { get; set; }
     public string Formation { get; set; } = "line";
@@ -295,6 +305,8 @@ public sealed class Settings
         ReliefFormHeight = float.IsFinite(ReliefFormHeight) ? Math.Clamp(ReliefFormHeight, 1, HighestReliefLimit) : 20;
         ReliefSlopeRise = float.IsFinite(ReliefSlopeRise) ? Math.Clamp(ReliefSlopeRise, 0, HighestReliefLimit) : 0;
         ReliefCircle = float.IsFinite(ReliefCircle) && ReliefCircle > 0 ? ReliefCircle : 10;
+        ReliefBand = float.IsFinite(ReliefBand) ? Math.Clamp(ReliefBand, NarrowestBand, WidestBand) : UsualBand;
+        ReliefForest = Math.Clamp(ReliefForest, 0, GroundKinds.Forests.Count - 1);
         if (!ReliefForms.Profiles.Contains(ReliefProfile)) ReliefProfile = ReliefForms.Round;
         ReliefContourHeight = float.IsFinite(ReliefContourHeight) ? Math.Clamp(ReliefContourHeight, 0, HighestReliefLimit) : 10;
         ReliefContourStep = float.IsFinite(ReliefContourStep) ? Math.Clamp(ReliefContourStep, -MostContourStep, MostContourStep) : 10;

@@ -98,7 +98,7 @@ sealed class BuildPanel : HudPart
         (Plans.Shore, "Shore", "Houses strung along the water's edge"), (Plans.Scatter, "Scatter", "Fenced steadings standing apart, no streets"),
     };
 
-    int Lays => Manners.For(BuildTool.Epoch(S), Manners.Parse(P.Manner).Lays);
+    int Lays => Manners.Parse(P.Manner).Lays;
 
     (string Key, string Text, string Tip)[] Places()
     {
@@ -457,7 +457,7 @@ sealed class BuildPanel : HudPart
         Choice(form, "From", Starts, P.FromCorner ? "corner" : "middle", key => P.FromCorner = key == "corner", "from-");
         Ui.AlignForm(form);
         _box.AddChild(form);
-        _box.AddChild(Palette(BuildTool.Ancient(S), false, P.Block, Lays, Chose(key => P.Block = key)));
+        _box.AddChild(Palette(false, P.Block, Lays, Chose(key => P.Block = key)));
     }
 
     void SizeRow(GridContainer form)
@@ -502,10 +502,30 @@ sealed class BuildPanel : HudPart
         _box.AddChild(form);
     }
 
-    internal static (string Key, string Text, string Tip, Texture2D? Sign)[] CulturesOf(Session s) =>
-        Manners.In(BuildTool.Epoch(s)).Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
+    internal static (string Key, string Text, string Tip, Texture2D? Sign)[] AllCultures() =>
+        Manners.ByAge.Select(m => (Manners.Id(m), Manners.Named(m).Name, Manners.Named(m).Tip, (Texture2D?)CultureSigns.Of(m))).ToArray();
 
-    (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() => CulturesOf(S);
+    static (string Key, string Text, string Tip, Texture2D? Sign)[] Cultures() => AllCultures();
+
+    internal static OptionButton CulturePicker(IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items, string now, Action<string> pick,
+        (string Text, string Tip, Action Do)? last = null) => Ui.Picker(items, now, pick, last, heads: AgeHeads(items));
+
+    internal static List<(int From, string Name)> AgeHeads(IReadOnlyList<(string Key, string Text, string Tip, Texture2D? Sign)> items)
+    {
+        var heads = new List<(int From, string Name)>();
+        int age = NoHead;
+        for (int i = 0; i < items.Count; i++)
+        {
+            var key = items[i].Key;
+            int now = Manners.All.Any(m => m.Id == key) ? Manners.Named(Manners.Of(key)).Epoch : key.Contains('+') ? MixesHead : age;
+            if (now == age) continue;
+            heads.Add((i, now == MixesHead ? "Mixes" : Manners.AgeTitle(now)));
+            age = now;
+        }
+        return heads;
+    }
+
+    const int MixesHead = -2, NoHead = -1;
 
     const string AddMixText = "Add mix…", RemoveMixTip = "Take this mix off the scenario's Culture list; places laid in it stay as they are";
 
@@ -514,7 +534,7 @@ sealed class BuildPanel : HudPart
         var kept = Mixes.Select(mix => (mix.Code, mix.Name, Manners.Parse(mix.Code).Name, (Texture2D?)CultureSigns.Of(Manners.Parse(mix.Code).Lays))).ToList();
         bool mixed = kept.Any(mix => mix.Code == P.Manner), umpire = S.CanEdit(Layers.Umpire);
         form.AddChild(new Label { Text = "Culture" });
-        form.AddChild(Ui.Picker(Cultures().Concat(kept).ToArray(), mixed ? P.Manner : Manners.Id(Lays), Chose(key => P.Manner = key),
+        form.AddChild(CulturePicker(Cultures().Concat(kept).ToArray(), mixed ? P.Manner : Manners.Id(Lays), Chose(key => P.Manner = key),
             umpire ? (AddMixText, "A culture of your own: one lays the place out, others build and adorn it; kept in the scenario under its name", () => Mixing(true)) : null));
         if (!mixed || !umpire) return;
         form.AddChild(new Control());
@@ -532,7 +552,7 @@ sealed class BuildPanel : HudPart
     int _mixLays = -1, _mixBuilds = -1, _mixAdorns = -1, _mixWard = -1;
     double _mixShare = Manners.UsualWard;
 
-    IEnumerable<NamedMix> Mixes => (S.View.Cultures ?? []).Where(mix => Manners.Named(Manners.Parse(mix.Code).Lays).Epoch == BuildTool.Epoch(S));
+    IEnumerable<NamedMix> Mixes => S.View.Cultures ?? [];
 
     void Mixing(bool on)
     {
@@ -555,7 +575,7 @@ sealed class BuildPanel : HudPart
         _rebuild();
     }
 
-    int OfAge(int stored, int lays) => stored >= 0 && Manners.Named(stored).Epoch == Manners.Named(lays).Epoch ? Manners.Known(stored) : lays;
+    static int OfAge(int stored, int lays) => stored >= 0 ? Manners.Known(stored) : lays;
 
     LineEdit NameOf(GridContainer form, string label)
     {
@@ -576,7 +596,7 @@ sealed class BuildPanel : HudPart
         void Side(string label, int now, Action<int> set)
         {
             form.AddChild(new Label { Text = label });
-            form.AddChild(Ui.Picker(Cultures(), Manners.Id(now), key =>
+            form.AddChild(CulturePicker(Cultures(), Manners.Id(now), key =>
             {
                 set(Manners.Of(key));
                 _rebuild();
@@ -586,7 +606,7 @@ sealed class BuildPanel : HudPart
         Side("Built by", builds, m => _mixBuilds = m);
         Side("Adorned by", adorns, m => _mixAdorns = m);
         form.AddChild(new Label { Text = "Quarter" });
-        form.AddChild(Ui.Picker(Quarters(), ward < 0 ? "" : Manners.Id(ward), key =>
+        form.AddChild(CulturePicker(Quarters(), ward < 0 ? "" : Manners.Id(ward), key =>
         {
             _mixWard = key.Length == 0 ? -1 : Manners.Of(key);
             _rebuild();
@@ -616,8 +636,8 @@ sealed class BuildPanel : HudPart
 
     string? Renamed(string cls) => BuildTool.Ancient(S) ? cls switch { "church" => "Temple", "steeple" => "Tower", "shrine" => "Milestone", _ => null } : null;
 
-    Control Palette(bool ancient, bool blocksOnly, string chosen, int manner, Action<string> pick) =>
-        PartPalette.Of(ancient, blocksOnly, _section, chosen, MapStyles.Index(S.View.Lighting.MapStyle), manner, Renamed, id =>
+    Control Palette(bool blocksOnly, string chosen, int manner, Action<string> pick) =>
+        PartPalette.Of(blocksOnly, _section, chosen, MapStyles.Index(S.View.Lighting.MapStyle), manner, Renamed, id =>
         {
             _section = id;
             _rebuild();
@@ -788,7 +808,7 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         var sides = Manners.SidesOf(picked);
         form.AddChild(new Label { Text = "Culture" });
-        form.AddChild(Ui.Picker(Cultures(), Manners.Id(sides.Lays), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
+        form.AddChild(CulturePicker(Cultures(), Manners.Id(sides.Lays), key => T.Build.Reset(Manners.Setting, Manners.Of(key))));
         if (star)
         {
             Held(form, "Bastions", Forts.FewestBastions, Forts.MostBastions, 1, picked.Setting(Forts.Bastions, 5), x => $"{x:0}", x => T.Build.Reset(Forts.Bastions, x), "A star of four to eight bastions");
@@ -843,11 +863,11 @@ sealed class BuildPanel : HudPart
         var form = Ui.Form(Ui.PanelLabels);
         var mix = Manners.MixOf(picked);
         form.AddChild(new Label { Text = "Built by" });
-        form.AddChild(Ui.Picker(Cultures(), Manners.Id(mix.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
+        form.AddChild(CulturePicker(Cultures(), Manners.Id(mix.Builds), key => T.Build.Reset(Manners.Builders, Manners.Of(key))));
         form.AddChild(new Label { Text = "Adorned by" });
-        form.AddChild(Ui.Picker(Cultures(), Manners.Id(mix.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
+        form.AddChild(CulturePicker(Cultures(), Manners.Id(mix.Adorns), key => T.Build.Reset(Manners.Adorners, Manners.Of(key))));
         form.AddChild(new Label { Text = "Quarter" });
-        form.AddChild(Ui.Picker(Quarters(), mix.Ward < 0 ? "" : Manners.Id(mix.Ward), key => T.Build.Reset(Manners.Ward, key.Length == 0 ? -1 : Manners.Of(key))));
+        form.AddChild(CulturePicker(Quarters(), mix.Ward < 0 ? "" : Manners.Id(mix.Ward), key => T.Build.Reset(Manners.Ward, key.Length == 0 ? -1 : Manners.Of(key))));
         if (mix.Ward >= 0)
             Held(form, "Its share", Manners.LeastWard, Manners.MostWard, 0.05, mix.Share, Percent, x => T.Build.Reset(Manners.WardShare, x), "How much of the place the quarter takes, built and adorned its own way");
         if (!mix.Pure && S.CanEdit(Layers.Umpire)) AddKeeping(form, mix);

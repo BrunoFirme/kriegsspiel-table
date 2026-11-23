@@ -73,15 +73,19 @@ public static class Manners
 
     public static string Id(int manner) => Named(manner).Id;
 
-    public static int For(int epoch, int wanted)
-    {
-        var asked = Named(wanted);
-        return asked.Epoch == epoch ? asked.Number : All.First(m => m.Epoch == epoch && m.Seat == asked.Seat).Number;
-    }
+    public static int For(int epoch, int wanted) => All.Any(m => m.Number == wanted) ? wanted : Default(epoch);
+
+    public static int Default(int epoch) => All.First(m => m.Epoch == epoch && m.Seat == West).Number;
+
+    public static readonly IReadOnlyList<int> Ages = [Ancient, Medieval, Later, Modern];
+
+    public static string AgeTitle(int epoch) => epoch switch { Ancient => "Ancient", Medieval => "Medieval", Modern => "Modern", _ => "Later" };
+
+    public static IEnumerable<int> ByAge => Ages.SelectMany(In);
 
     public readonly record struct Sides(int Lays, int Builds, int Adorns);
 
-    static int Side(int lays, double stored) => Named((int)stored).Epoch == Named(lays).Epoch ? Known((int)stored) : lays;
+    static int Side(int lays, double stored) => stored < 0 ? lays : Known((int)stored);
 
     public static Sides SidesOf(BuiltThing thing)
     {
@@ -100,7 +104,7 @@ public static class Manners
 
         public void Onto(BuiltThing thing)
         {
-            if (Pure || Named(Of(thing)).Epoch != Named(Lays).Epoch) return;
+            if (Pure) return;
             thing.Settings[Builders] = Builds;
             thing.Settings[Adorners] = Adorns;
             if (Ward < 0) return;
@@ -113,7 +117,7 @@ public static class Manners
     {
         var sides = SidesOf(thing);
         int ward = (int)thing.Setting(Ward, -1);
-        bool warded = ward >= 0 && All.Any(m => m.Number == ward) && Named(ward).Epoch == Named(sides.Lays).Epoch;
+        bool warded = ward >= 0 && All.Any(m => m.Number == ward);
         return new(sides.Lays, sides.Builds, sides.Adorns, warded ? ward : -1, warded ? Math.Clamp(thing.Setting(WardShare, UsualWard), LeastWard, MostWard) : 0);
     }
 
@@ -122,7 +126,7 @@ public static class Manners
         var ids = (code ?? "").Split('+');
         if (ids.Length != Parts) return new(Of(ids[0]), Of(ids[0]), Of(ids[0]), -1, 0);
         int lays = Of(ids[0]);
-        bool warded = ids[3].Length > 0 && Named(Of(ids[3])).Epoch == Named(lays).Epoch;
+        bool warded = ids[3].Length > 0 && All.Any(m => m.Id == ids[3]);
         double share = double.TryParse(ids[4], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double read) ? read : UsualWard;
         return new(lays, Side(lays, Of(ids[1])), Side(lays, Of(ids[2])), warded ? Of(ids[3]) : -1, warded ? Math.Clamp(share, LeastWard, MostWard) : 0);
     }

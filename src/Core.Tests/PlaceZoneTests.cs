@@ -124,7 +124,7 @@ public class PlaceZoneTests
         Assert.Equal(("gothic", Manners.Gothic), (gothic.Parts[wardHouse].Culture, ZoneOf(Table(gothic), gothic, wardHouse).Culture.Own));
         Assert.Null(ZoneOverrides.WithCulture(town, Sheet, [wardHouse], "rus").Parts[wardHouse].Culture);
         var later = Table(town, MapStyles.Survey);
-        Assert.Equal((Manners.Later, Manners.Continental), (ZoneOf(later, town, houses[0]).Culture.Age, ZoneOf(later, town, houses[0]).Culture.Town));
+        Assert.Equal((Manners.Later, Manners.Gothic), (ZoneOf(later, town, houses[0]).Culture.Age, ZoneOf(later, town, houses[0]).Culture.Town));
     }
 
     [Fact]

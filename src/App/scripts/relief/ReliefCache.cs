@@ -37,6 +37,52 @@ public sealed class ReliefCache
 
     public Func<double> UnitsPerMetre { get; set; } = () => 0;
 
+    public Func<IReadOnlyList<GroundLayerDef>> GroundLayers { get; set; } = () => [];
+
+    string _layer = GroundLayerDef.BaseId;
+
+    public string Layer
+    {
+        get => GroundLayers().Any(l => l.Id == _layer) ? _layer : Order[0];
+        set => _layer = value;
+    }
+
+    public IReadOnlyList<string> Order => GroundLayers() is { Count: > 0 } layers ? layers.Select(l => l.Id).ToList() : [GroundLayerDef.BaseId];
+
+    public GroundLayerDef? Chosen => GroundLayers().FirstOrDefault(l => l.Id == Layer);
+
+    public bool Locked => Chosen is { Locked: true };
+
+    readonly HashSet<string> _hidden = new();
+
+    public bool Hidden(string layer) => _hidden.Contains(layer);
+
+    public bool PaintBlocked => Locked || Hidden(Layer);
+
+    public void Show(string layer, bool shown)
+    {
+        if (shown ? !_hidden.Remove(layer) : !_hidden.Add(layer)) return;
+        _shownVersion++;
+        Invalidate();
+    }
+
+    public void Aim(ReliefGrid g) => g.Aim(Layer, Order);
+
+    public void Settle(ReliefGrid g) => g.Settle(Order, Layer);
+
+    readonly Dictionary<string, (ReliefGrid Of, int Version, ReliefGrid Shown)> _shownGround = new();
+    int _shownVersion;
+
+    ReliefGrid? ShownOf(string sheetId, ReliefGrid? g)
+    {
+        if (g == null || _hidden.Count == 0 || !(g.Layers?.Keys.Any(_hidden.Contains) ?? _hidden.Contains(GroundLayerDef.BaseId))) return g;
+        if (_shownGround.TryGetValue(sheetId, out var kept) && ReferenceEquals(kept.Of, g) && kept.Version == _shownVersion) return kept.Shown;
+        var shown = g.Copy();
+        shown.Compose(Order.Where(id => !_hidden.Contains(id)).ToList());
+        _shownGround[sheetId] = (g, _shownVersion, shown);
+        return shown;
+    }
+
     readonly Dictionary<string, (ReliefGrid Of, long Key, ReliefGrid Shaped)> _shaped = new();
 
     public long Works(SheetDef s) => KeyOf(Built(s.Id));
@@ -121,7 +167,7 @@ public sealed class ReliefCache
 
     public bool Loading => _loading.Count > 0;
 
-    public ReliefGrid? Grid(SheetDef s) => _previews.TryGetValue(s.Id, out var preview) ? preview : Under(s);
+    public ReliefGrid? Grid(SheetDef s) => ShownOf(s.Id, _previews.TryGetValue(s.Id, out var preview) ? preview : Under(s));
 
     public ReliefGrid? Under(SheetDef s)
     {
@@ -170,6 +216,7 @@ public sealed class ReliefCache
 
     public void Draft(string sheetId, ReliefGrid? g, Rect2? where = null, CellBox? cells = null, bool sculpts = true)
     {
+        _shownVersion++;
         if (g == null) Forget(sheetId);
         else
         {
@@ -191,6 +238,7 @@ public sealed class ReliefCache
     public void Preview(string sheetId, ReliefGrid g, Rect2? where, CellBox? cells, byte[] pending)
     {
         if (!_previews.TryGetValue(sheetId, out var had) || !ReferenceEquals(had, g)) _shown.Remove(sheetId);
+        _shownVersion++;
         _previews[sheetId] = g;
         _pending[sheetId] = pending;
         Touch(sheetId, cells);
@@ -311,7 +359,7 @@ public sealed class ReliefCache
             ReliefIndex index;
             try { index = ReliefFiles.LoadIndex(Find(sheet, ReliefFiles.HeaderRel(sha))!); }
             catch (Exception e) when (e is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException) { Fail(e.Message); return; }
-            var chunks = index.Heights.Concat(index.Ground).Where(c => c.Length > 0).Distinct().Select(ReliefFiles.ChunkRel).ToList();
+            var chunks = ReliefFiles.Files(sha, index).Where(rel => rel != ReliefFiles.HeaderRel(sha)).ToList();
             int waiting = chunks.Count;
             bool lost = false;
             void Arrived()

@@ -60,10 +60,13 @@ sealed class ReliefPreview
     public byte[] Mask { get; }
     public PreviewKey? Shown { get; private set; }
 
-    public static ReliefPreview? Of(Session s, SheetDef sheet)
+    public static ReliefPreview? Of(Session s, SheetDef sheet, bool paints = false)
     {
         var under = s.Relief.Under(sheet);
-        return under == null && sheet.Relief is { Length: > 0 } ? null : new ReliefPreview(s.Relief, sheet, under);
+        if (under == null && sheet.Relief is { Length: > 0 }) return null;
+        var preview = new ReliefPreview(s.Relief, sheet, under);
+        if (paints) s.Relief.Aim(preview.Grid);
+        return preview;
     }
 
     public bool Holds(Session s) => s.View.Sheets.FirstOrDefault(x => x.Id == Sheet.Id) is { } now && ReferenceEquals(s.Relief.Under(now), _under) && Placed(now, Sheet);

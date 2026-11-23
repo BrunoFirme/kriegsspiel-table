@@ -681,8 +681,11 @@ public partial class Table : Node3D
         : _c.Settings.ReliefMode is "raise" or "lower"
             ? "Hold to raise or lower at the Rate · Ctrl turns one into the other · Alt+click takes the height there · = and − size the brush"
             : "Drag to shape the ground · Shift+click runs straight on · Alt+click takes the height there · = and − size the brush"
+        : S.Relief.PaintBlocked ? (S.Relief.Locked ? ReliefTool.LockedWords : ReliefTool.HiddenWords) + " Pick another in Layers, or unlock it"
         : _c.Settings.ReliefPaint switch
         {
+            ReliefTool.Line => "Drag the line across the ground · it lays a band of the Width, finer cells under a narrow one · Alt+click takes what is there",
+            ReliefTool.Curve => "Click along its course, then the last point again or double-click to lay a band of the Width · Esc drops it",
             "fill" => "Click a patch of ground to fill it up to other ground types, or a bare sheet whole; on its own kind, lays it afresh · Alt+click takes what is there",
             "rect" => "Drag the rectangle across the ground · Shift for a square",
             "ellipse" => "Drag the ellipse across the ground · Shift for a circle · a click lays a circle of the Radius",

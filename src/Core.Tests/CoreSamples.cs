@@ -168,6 +168,12 @@ public static class CoreSamples
         [new AllowOrders { On = true }, new OrderPiece { Layer = Layers.Umpire, Id = "p-000001", Order = new TimedOrder { Points = [new(3, 4), new(5, 4)], Legs = [90], Start = 120, Pace = 2, By = "rider" },
             Name = "Gun" }];
 
+    static IEnumerable<Command> GroundLayerCommands() =>
+    [
+        new AddGroundLayer { Id = "g-rivers", Name = "Rivers", Index = 0 }, new RenameGroundLayer { Id = "g-rivers", Name = "Streams" },
+        new LockGroundLayer { Id = "g-rivers", Locked = true }, new MoveGroundLayer { Id = "g-rivers", Index = 1 }, new RemoveGroundLayer { Id = "g-rivers" },
+    ];
+
     public static IEnumerable<Command> AllCommands()
     {
         const string L = Layers.Umpire;
@@ -219,6 +225,7 @@ public static class CoreSamples
         yield return new AddBoard { Name = "Plan" };
         yield return new RenameBoard { Id = "b-000001", Name = "Ground" };
         yield return new MoveBoard { Id = "b-000001", Index = 0 };
+        foreach (var layered in GroundLayerCommands()) yield return layered;
         yield return new RemoveBoard { Id = "b-000001" };
         yield return new Draw { Layer = "scratch:red", Stroke = Stroke("d-000300") };
         yield return new EraseStroke { Layer = L, StrokeId = "d-000004" };

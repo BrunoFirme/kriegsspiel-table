@@ -52,6 +52,7 @@ public sealed class GameState
     public Dictionary<string, List<DecalDef>> Decals { get; set; } = new();
     public List<PaletteDecal> DecalPalette { get; set; } = new();
     public List<BoardDef> Boards { get; set; } = new();
+    public List<GroundLayerDef> GroundLayers { get; set; } = [new GroundLayerDef { Id = GroundLayerDef.BaseId, Name = GroundLayerDef.BaseName }];
     public List<BuiltThing> Built { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<NamedMix>? Cultures { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public CrowdState? Crowds { get; set; }
@@ -106,6 +107,7 @@ public sealed class GameState
         s.Decals["umpire"] = DecalLayer(Model.Layers.Umpire).Select(d => d.Clone()).ToList();
         s.DecalPalette = DecalPalette.Select(d => d.Clone()).ToList();
         s.Boards = Boards.Select(b => b.Clone()).ToList();
+        s.GroundLayers = GroundLayers.Select(l => l.Clone()).ToList();
         s.Built = Built.Select(b => b.Clone()).ToList();
         s.Places = Places?.Select(p => p.Clone()).ToList();
         s.Cultures = Cultures?.Select(c => c.Clone()).ToList();
@@ -136,6 +138,7 @@ public sealed class GameState
         g.Decals[Model.Layers.Umpire] = s.Decals.TryGetValue("umpire", out var d) ? d.Select(x => x.Clone()).ToList() : new();
         g.DecalPalette = s.DecalPalette.Select(x => x.Clone()).ToList();
         g.Boards = s.Boards.Select(b => b.Clone()).ToList();
+        g.GroundLayers = (s.GroundLayers ?? []).Select(l => l.Clone()).ToList();
         g.Built = (s.Built ?? new()).Select(b => b.Clone()).ToList();
         g.Cultures = s.Cultures?.Select(c => c.Clone()).ToList();
         g.Crowds = s.Crowds?.Clone();
@@ -155,12 +158,22 @@ public sealed class GameState
     public void EnsureBoard()
     {
         if (Boards.Count == 0) Boards.Add(new BoardDef { Id = NewId("b"), Name = "Layer 1" });
+        EnsureGroundLayer();
         PinSight();
         var first = Boards[0].Id;
         foreach (var l in Drawings.Values)
             foreach (var s in l)
                 if (string.IsNullOrEmpty(s.Board)) s.Board = first;
     }
+
+    public void EnsureGroundLayer()
+    {
+        GroundLayers ??= new();
+        GroundLayers.RemoveAll(l => l == null || !GroundLayerDef.FitId(l.Id));
+        if (GroundLayers.Count == 0) GroundLayers.Add(new GroundLayerDef { Id = GroundLayerDef.BaseId, Name = GroundLayerDef.BaseName });
+    }
+
+    [JsonIgnore] public IReadOnlyList<string> GroundOrder => GroundLayers.Count == 0 ? [GroundLayerDef.BaseId] : GroundLayers.Select(l => l.Id).ToList();
 
     public void EnsureNextId()
     {
@@ -214,6 +227,8 @@ public sealed class GameState
         Dice = s.Dice;
         Zones = s.Zones;
         Boards = s.Boards;
+        GroundLayers = s.GroundLayers ?? new();
+        EnsureGroundLayer();
         Built = s.Built ?? new();
         Cultures = s.Cultures;
         Crowds = s.Crowds;
