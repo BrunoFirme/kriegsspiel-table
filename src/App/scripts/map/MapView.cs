@@ -46,7 +46,7 @@ static class MapView
         var vp = new SubViewport
         {
             Size = picture, World3D = table.GetViewport().FindWorld3D(),
-            RenderTargetUpdateMode = SubViewport.UpdateMode.Always, TransparentBg = false, Msaa3D = Viewport.Msaa.Msaa4X,
+            RenderTargetUpdateMode = SubViewport.UpdateMode.Disabled, TransparentBg = false, Msaa3D = Viewport.Msaa.Msaa4X,
         };
         var cam = new Camera3D
         {
@@ -71,6 +71,8 @@ static class MapView
             GroundTiles.Lend(cam);
             await host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             await GroundTiles.WhenSettled(host);
+            if (!GodotObject.IsInstanceValid(vp)) return null;
+            vp.RenderTargetUpdateMode = SubViewport.UpdateMode.Always;
             await host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             await host.ToSignal(RenderingServer.Singleton, RenderingServer.SignalName.FramePostDraw);
             if (!GodotObject.IsInstanceValid(vp)) return null;

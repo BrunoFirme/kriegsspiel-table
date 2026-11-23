@@ -27,9 +27,25 @@ public static class AppClipboard
     public static string? SetImage(Image img)
     {
         if (!_keptInApp) return ImageClipboard.Copy(img);
+        Keep(img);
+        return null;
+    }
+
+    public static async System.Threading.Tasks.Task<string?> SetImage(Image img, byte[] png)
+    {
+        if (_keptInApp)
+        {
+            Keep(img);
+            return null;
+        }
+        var ready = await System.Threading.Tasks.Task.Run(() => ImageClipboard.Prepare(img, png));
+        return ImageClipboard.Put(ready);
+    }
+
+    static void Keep(Image img)
+    {
         Forget();
         _image = (Image)img.Duplicate();
-        return null;
     }
 
     public static string? SetFile(string path)
@@ -63,16 +79,50 @@ public static class ImageClipboard
     [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr GlobalLock(IntPtr hMem);
     [DllImport("kernel32.dll", SetLastError = true)] static extern bool GlobalUnlock(IntPtr hMem);
 
-    public static string? Copy(Image img)
+    public sealed class Prepared
     {
-        if (OS.GetName() != "Windows")
-            return CopyUnix(img);
-        img = (Image)img.Duplicate();
-        img.Convert(Image.Format.Rgba8);
+        internal byte[]? Dib { get; init; }
+        internal byte[]? Png { get; init; }
+        internal string? File { get; init; }
+        internal string? Error { get; init; }
+    }
+
+    static readonly bool OnWindows = OS.GetName() == "Windows";
+
+    public static string? Copy(Image img) => Put(Prepare(img, null));
+
+    public static Prepared Prepare(Image img, byte[]? png)
+    {
+        if (!OnWindows) return PrepareUnix(img, png);
+        if (img.GetFormat() != Image.Format.Rgba8)
+        {
+            img = (Image)img.Duplicate();
+            img.Convert(Image.Format.Rgba8);
+        }
+        return new Prepared { Dib = Dib(img), Png = png is { Length: > 0 } ? png : img.SavePngToBuffer() };
+    }
+
+    public static string? Put(Prepared p)
+    {
+        if (p.Error != null) return p.Error;
+        if (!OnWindows) return PutUnix(p.File!);
+        var hwnd = (IntPtr)DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
+        for (int attempt = 0; attempt < OpenAttempts && !OpenClipboard(hwnd); attempt++) System.Threading.Thread.Sleep(OpenRetryMs);
+        try
+        {
+            EmptyClipboard();
+            SetClipboardData(CF_DIB, ToGlobal(p.Dib!));
+            var pngFmt = RegisterClipboardFormat("PNG");
+            if (pngFmt != 0 && p.Png is { Length: > 0 } png) SetClipboardData(pngFmt, ToGlobal(png));
+        }
+        finally { CloseClipboard(); }
+        return null;
+    }
+
+    static byte[] Dib(Image img)
+    {
         int w = img.GetWidth(), h = img.GetHeight();
         var rgba = img.GetData();
-        var png = img.SavePngToBuffer();
-
         var dib = new byte[40 + w * h * 4];
         const int BitmapInfoHeaderSize = 40, UncompressedRgb = 0;
         BitConverter.GetBytes(BitmapInfoHeaderSize).CopyTo(dib, 0);
@@ -93,18 +143,7 @@ public static class ImageClipboard
                 dib[dst + 3] = rgba[src + 3];
             }
         }
-
-        var hwnd = (IntPtr)DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
-        for (int attempt = 0; attempt < 10 && !OpenClipboard(hwnd); attempt++) System.Threading.Thread.Sleep(20);
-        try
-        {
-            EmptyClipboard();
-            SetClipboardData(CF_DIB, ToGlobal(dib));
-            var pngFmt = RegisterClipboardFormat("PNG");
-            if (pngFmt != 0) SetClipboardData(pngFmt, ToGlobal(png));
-        }
-        finally { CloseClipboard(); }
-        return null;
+        return dib;
     }
 
     public static string? CopyFile(string path)
@@ -154,11 +193,21 @@ public static class ImageClipboard
         return h;
     }
 
-    static string? CopyUnix(Image img)
+    static Prepared PrepareUnix(Image img, byte[]? png)
     {
         var tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ktable_capture.png");
         KTable.Core.BestEffort.DeleteFile(tmp);
-        if (img.SavePng(tmp) is var err && err != Error.Ok) return $"could not write {tmp} ({err})";
+        if (png is { Length: > 0 })
+        {
+            try { System.IO.File.WriteAllBytes(tmp, png); }
+            catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException) { return new Prepared { Error = $"could not write {tmp} ({e.Message})" }; }
+        }
+        else if (img.SavePng(tmp) is var err && err != Error.Ok) return new Prepared { Error = $"could not write {tmp} ({err})" };
+        return new Prepared { File = tmp };
+    }
+
+    static string? PutUnix(string tmp)
+    {
         if (OS.GetName() == "macOS")
         {
             var quoted = tmp.Replace("\\", "\\\\").Replace("\"", "\\\"");

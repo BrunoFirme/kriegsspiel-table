@@ -286,6 +286,29 @@ static class MapBoxTests
         stage.Filmic(false);
     }
 
+    [NodeTest]
+    static async Task A_picture_made_ready_for_the_clipboard_off_the_main_thread_is_bottom_up_blue_green_red_beside_its_png(TestRunner r)
+    {
+        await r.Frame();
+        var img = Image.CreateEmpty(3, 2, false, Image.Format.Rgb8);
+        img.SetPixel(0, 0, new Color(1, 0, 0));
+        img.SetPixel(2, 1, new Color(0, 0, 1));
+        var png = img.SavePngToBuffer();
+        var ready = await Task.Run(() => ImageClipboard.Prepare(img, png));
+        Check.That(img.GetFormat() == Image.Format.Rgb8, "the picture handed in is left as it was");
+        if (OS.GetName() != "Windows")
+        {
+            Check.That(ready.File is { } f && File.Exists(f) && new FileInfo(f).Length == png.Length, "the picture's PNG is written for the clipboard tool");
+            return;
+        }
+        var dib = ready.Dib!;
+        const int Header = 40;
+        Check.Equal(Header + 3 * 2 * 4, dib.Length, "a header and four bytes a pixel");
+        Check.Equal("255,0,0,255", string.Join(",", dib[(Header + 2 * 4)..(Header + 3 * 4)]), "the bottom row comes first, blue first");
+        Check.Equal("0,0,255,255", string.Join(",", dib[(Header + 3 * 4)..(Header + 4 * 4)]), "the top row comes second, red third");
+        Check.That(ReferenceEquals(ready.Png, png), "the PNG already made is reused, not made again");
+    }
+
     [ScreenTest]
     static async Task The_box_captures_at_the_most_pixels_whole(TestRunner r)
     {

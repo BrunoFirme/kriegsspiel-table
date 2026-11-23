@@ -173,10 +173,11 @@ sealed class Captures : HudPart
     async Task Deliver(Image img, string kind)
     {
         var msgs = new List<string>();
+        byte[] png = Cfg.CaptureToClipboard || Cfg.CaptureToFolder ? await Task.Run(() => img.SavePngToBuffer()) : Array.Empty<byte>();
         if (Cfg.CaptureToClipboard)
         {
             string? err;
-            try { err = AppClipboard.SetImage(img); } catch (Exception e) { err = e.Message; }
+            try { err = await AppClipboard.SetImage(img, png); } catch (Exception e) { err = e.Message; }
             msgs.Add(err == null ? "copied to clipboard" : "clipboard failed: " + err);
         }
         if (Cfg.CaptureToFolder)
@@ -186,14 +187,28 @@ sealed class Captures : HudPart
                 var folder = Cfg.CaptureFolder;
                 Directory.CreateDirectory(folder);
                 var file = FreeFile(folder, $"{S.View.ScenarioId}_{S.View.Clock.Turn}_{kind}_{DateTime.Now:HHmmss}");
-                var perr = await Task.Run(() => img.SavePng(file));
-                msgs.Add(perr == Error.Ok ? "saved " + Path.GetFileName(file) : $"could not write to {Cfg.CaptureFolder} ({perr})");
+                if (png.Length > 0) await Task.Run(() => WriteWhole(file, png));
+                msgs.Add(png.Length > 0 ? "saved " + Path.GetFileName(file) : $"could not write to {Cfg.CaptureFolder} (no picture)");
             }
             catch (Exception e) { msgs.Add($"could not write to {Cfg.CaptureFolder}: {e.Message}"); }
         }
         Handed = $"{PictureWord} {img.GetWidth()}×{img.GetHeight()}: {string.Join(", ", msgs)}";
         Log(Handed);
         Say(string.Join(", ", msgs) + " — Ctrl+V into Discord.");
+    }
+
+    static void WriteWhole(string file, byte[] bytes)
+    {
+        try
+        {
+            File.WriteAllBytes(file + PartSuffix, bytes);
+            File.Move(file + PartSuffix, file, overwrite: true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            BestEffort.DeleteFile(file + PartSuffix);
+            throw;
+        }
     }
 
     const int MostFramesForFiles = 30, LeastFramesForFiles = 2;
