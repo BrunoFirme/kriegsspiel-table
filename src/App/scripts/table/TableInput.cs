@@ -76,7 +76,7 @@ sealed class TableInput
     public event Action? BoxCaptureRequested;
     public Rect2? LastCaptureRect { get; set; }
     public bool LastCaptureBoxed { get; private set; }
-    const float LeastCapturePx = 8;
+    const float LeastCapturePx = 8, SightClickPx = 5;
 
     public void CaptureBox()
     {
@@ -449,7 +449,7 @@ sealed class TableInput
                 _letters.Release();
                 break;
             case Tool.Sighting:
-                _sighting.Release();
+                if (g == null || mb.Position.DistanceTo(PressPos) > SightClickPx || !_sighting.Click(g.Value, mb.Position, mb.ShiftPressed)) _sighting.Release();
                 break;
             case Tool.Relief:
                 _relief.Release();

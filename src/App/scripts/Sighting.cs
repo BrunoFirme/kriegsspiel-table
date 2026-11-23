@@ -153,7 +153,7 @@ sealed class Sighting
 
     public string Hint() =>
         _picked != null ? "Drag a corner of the picked line to move it · Delete takes it away · Lines changes its kind · click away to draw"
-        : Draft is { Many: true } d ? $"What {d.Watchers.Count} pieces see together · {Steps()}" : Steps();
+        : (Draft is { Many: true } d ? $"What {d.Watchers.Count} pieces see together · {Steps()}" : Steps()) + " · Shift+click a piece adds it";
 
     string Steps() => Draft switch
     {
@@ -463,10 +463,13 @@ sealed class Sighting
         NotifyChanged();
     }
 
+    bool _onLine, _lookingFrom;
+
     public void Press(Vec2 g)
     {
+        _onLine = false;
         if (Draft is null or { Gridded: true }) return;
-        if (!Draft.Drawn && Grabbed(Draft, g)) return;
+        if (!Draft.Drawn && Grabbed(Draft, g)) { _onLine = true; return; }
         if (_picked != null)
         {
             Unpick();
@@ -535,6 +538,7 @@ sealed class Sighting
 
     public void Release()
     {
+        _onLine = false;
         if (Draft != null && _grab >= 0 && _moved != null && _picked != null)
         {
             var moved = _moved;
@@ -672,13 +676,41 @@ sealed class Sighting
 
     public void Aim()
     {
-        if (Draft == null || Recording || _c.Tool != Tool.Sighting) return;
+        if (Draft == null || Recording || _lookingFrom || _c.Tool != Tool.Sighting) return;
         var picked = _selection.Nodes.Select(n => n.Piece.Id).ToHashSet();
         if (picked.Count == 0 || picked.SetEquals(Draft.Watchers)) return;
         if (Draft.Walls.Count + Draft.Outlines.Count > 0) return;
         var was = Draft;
         Draft = null;
         Begin(was.Radius, was);
+    }
+
+    public bool Click(Vec2 g, Vector2? screen, bool add)
+    {
+        bool onLine = _onLine;
+        _onLine = false;
+        if (Draft is not { } d || Recording || onLine) return false;
+        if (_pieces.Pick(g, screen: screen) is not { Layer: Layers.Umpire } hit) return false;
+        var id = hit.Piece.Id;
+        var ids = add ? d.Watchers.ToList() : new List<string> { id };
+        if (add && !ids.Remove(id)) ids.Add(id);
+        DropWall();
+        LookFrom(ids);
+        return true;
+    }
+
+    public void LookFrom(IReadOnlyCollection<string> ids)
+    {
+        if (Draft is not { } was || Recording || ids.Count == 0) return;
+        _lookingFrom = true;
+        try { _selection.Set(ids); }
+        finally { _lookingFrom = false; }
+        if (was.Watchers.ToHashSet().SetEquals(ids)) return;
+        Draft = null;
+        if (!Begin(was.Radius, was) || Draft is not { } now) { Draft = was; return; }
+        now.Lines.AddRange(was.Lines);
+        now.Outlines.AddRange(was.Outlines);
+        Redraw();
     }
 
     public bool Begin(double? radius = null) => Begin(radius, null);

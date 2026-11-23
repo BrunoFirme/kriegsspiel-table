@@ -79,6 +79,28 @@ static class PovManyEyesTests
         h.Table.CancelSighting();
     }
 
+    static string Watching(OfflineTable t) => string.Join(",", t.Table.Draft!.Watchers.OrderBy(x => x));
+
+    [NodeTest]
+    static async Task Clicking_a_piece_in_the_pov_tool_looks_from_it_and_shift_click_adds_or_drops_it_keeping_the_traced_walls(TestRunner r)
+    {
+        var (t, _) = await TwoWatchers(r);
+        Check.That(t.Table.Sighting.Trace(new List<Vec2> { new(Beside / 2, -3), new(Beside / 2, 3) }), "a wall is traced");
+        Check.That(t.Table.Sighting.Click(new Vec2(Apart / 2, 0), null, add: false), "a click on a piece is taken");
+        Check.Equal("p4", Watching(t), "a click looks from that piece alone");
+        Check.Equal(1, t.Table.Sighting.StrokesDrawn, "and the traced wall stays");
+        Check.That(t.Table.Selected.SetEquals(new[] { "p4" }), "the piece is picked as well");
+        t.Table.Sighting.Click(new Vec2(Apart, 0), null, add: true);
+        Check.Equal("p2,p4", Watching(t), "Shift+click adds a piece");
+        t.Table.Sighting.Click(new Vec2(Apart / 2, 0), null, add: true);
+        Check.Equal("p2", Watching(t), "Shift+click on one already looking drops it");
+        t.Table.Sighting.Click(new Vec2(Apart, 0), null, add: true);
+        Check.Equal("p2", Watching(t), "the last one stays");
+        Check.That(!t.Table.Sighting.Click(new Vec2(Apart / 2, 3 * Reach / 2), null, add: false), "a click on bare ground is no piece");
+        Check.Equal("p2", Watching(t), "and changes nothing");
+        t.Table.CancelSighting();
+    }
+
     static float Solid(Image img, double x, double z)
     {
         double perUnit = img.GetWidth() / (Apart + 2 * Reach);
