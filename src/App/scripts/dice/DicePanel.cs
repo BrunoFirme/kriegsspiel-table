@@ -11,7 +11,7 @@ sealed class DicePanel : HudPart
     public System.Action? ShowTableDice;
     readonly Label _results;
     bool _fresh;
-    const int ResultSize = 15;
+    const int ResultSize = 15, LeastSides = 2, MostSides = 1000, AnySidesStart = 100;
 
     public DicePanel(HudContext c, IHudShell shell) : base(c)
     {
@@ -55,6 +55,15 @@ sealed class DicePanel : HudPart
             faces.AddChild(b);
         }
         box.AddChild(faces);
+        var any = new HBoxContainer();
+        any.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
+        var sidesBox = new SpinBox { MinValue = LeastSides, MaxValue = MostSides, Step = 1, Rounded = true, Value = AnySidesStart, Prefix = "d", TooltipText = "Sides" };
+        sidesBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        var addAny = Btn("Add", () => AddDie((int)sidesBox.Value), "add a die with these sides · click again for another");
+        addAny.CustomMinimumSize = Ui.Px(52, 30);
+        any.AddChild(sidesBox);
+        any.AddChild(addAny);
+        box.AddChild(any);
         box.AddChild(line);
         void Roll()
         {
