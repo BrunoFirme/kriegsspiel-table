@@ -824,7 +824,7 @@ public sealed class Stroke
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Bold { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Italic { get; set; }
 
-    public const double LeastLetter = 0.01, MostLetter = 100_000, LeastSpacing = -0.2, MostSpacing = 2, FullTurn = 360, MostWrap = 10_000_000;
+    public const double LeastLetter = 0.01, MostLetter = 100_000, LeastSpacing = -0.2, MostSpacing = 2, FullTurn = 360, MostWrap = 10_000_000, MostWrapLetters = 80;
     public const string AlignLeft = "left", AlignCentre = "centre", AlignRight = "right", AlignSpread = "spread";
     public static readonly string[] Aligns = [AlignLeft, AlignCentre, AlignRight, AlignSpread];
     public const string FontSerif = "serif", FontWater = "water", FontRegion = "region", FontDidone = "didone", FontSans = "sans", FontFraktur = "fraktur", FontScript = "script", FontCapitals = "capitals";
@@ -833,6 +833,7 @@ public sealed class Stroke
     public static bool Lettered(double letter) => double.IsFinite(letter) && letter >= LeastLetter && letter <= MostLetter;
     public static bool Spaced(double spacing) => double.IsFinite(spacing) && spacing >= LeastSpacing && spacing <= MostSpacing;
     public static bool Wrapped(double wrap) => double.IsFinite(wrap) && wrap >= LeastLetter && wrap <= MostWrap;
+    public static bool Boxed(double wrap, double letter) => Wrapped(wrap) && wrap <= letter * MostWrapLetters;
     public static double Turned(double degrees) => (degrees % FullTurn + FullTurn) % FullTurn;
 
     [JsonIgnore] public double TurnDeg => Turn ?? 0;
@@ -842,7 +843,7 @@ public sealed class Stroke
         : Spacing is { } spacing && !Spaced(spacing) ? "letter spacing out of range"
         : Align != null && Array.IndexOf(Aligns, Align) < 0 ? "unknown alignment"
         : Turn is { } turn && !double.IsFinite(turn) ? "turn out of range"
-        : Wrap is { } wrap && !Wrapped(wrap) ? "text box width out of range"
+        : Wrap is { } wrap && !(Letter is { } tall ? Boxed(wrap, tall) : Wrapped(wrap)) ? "text box width out of range"
         : Font != null && Array.IndexOf(Fonts, Font) < 0 ? "unknown font"
         : Sight != null && Array.IndexOf(SightKinds, Sight) < 0 ? "unknown kind of sight line"
         : Blur is { } blur && !(blur >= 0 && blur <= MostSightBlur) ? "blur out of range"

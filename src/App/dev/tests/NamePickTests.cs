@@ -132,9 +132,10 @@ static class NamePickTests
 
         letters.Type("Uru");
         KeyIn(r, Godot.Key.Enter, shift: true);
+        KeyIn(r, Godot.Key.Tab);
         KeyIn(r, Godot.Key.A, unicode: 'A');
         await r.Frames(3);
-        Check.Equal("Uru\nA", letters.Typed ?? "", "Shift+Enter starts a new line");
+        Check.Equal("Uru\nA", letters.Typed ?? "", "Shift+Enter starts a new line, and Tab types nothing");
         Check.That(t.Table.MapLettering.Caret is { } caret && caret.At.Z < 8 - one.HalfTall * 2, "and the caret goes down to it");
         KeyIn(r, Godot.Key.Enter);
         await r.Frame();

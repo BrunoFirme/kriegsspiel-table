@@ -309,9 +309,9 @@ sealed class MapLettering
 
     public static string Words(string text, Hand hand)
     {
-        var words = text.Replace("\r", "").TrimStart().TrimEnd(' ', '\t');
+        var words = text.Replace("\r", "").Replace('\t', ' ').TrimStart().TrimEnd(' ');
         if (hand.Capitals) words = words.ToUpperInvariant();
-        var lines = words.Split('\n').Select(l => l.Trim(' ', '\t'));
+        var lines = words.Split('\n').Select(l => l.Trim(' '));
         if (hand.Interpuncts) lines = lines.Select(l => string.Join(Interpunct, l.Split(' ', StringSplitOptions.RemoveEmptyEntries)));
         return string.Join("\n", lines);
     }

@@ -102,6 +102,7 @@ public class NameEditsTests
         name.Turn = 90;
         Near(new Vec2(2, -1), NameEdits.Widened(name, 4, 1, 2, 0.5).Points[0]);
         Assert.Equal(0.5, NameEdits.Widened(name, 4, 1, -10, 0.5).Wrap!.Value, Close);
+        Assert.Equal(0.5 * Stroke.MostWrapLetters, NameEdits.Widened(name, 4, 1, 1000, 0.5).Wrap!.Value, Close);
         Assert.Null(name.Wrap);
     }
 
@@ -119,6 +120,8 @@ public class NameEditsTests
     [InlineData(0.0, false)]
     [InlineData(double.NaN, false)]
     [InlineData(double.PositiveInfinity, false)]
+    [InlineData(2.0 * Stroke.MostWrapLetters, true)]
+    [InlineData(2.0 * Stroke.MostWrapLetters + 0.01, false)]
     public void A_text_box_takes_only_a_width_in_range(double wrap, bool kept)
     {
         var name = Name(new Vec2(0, 0));

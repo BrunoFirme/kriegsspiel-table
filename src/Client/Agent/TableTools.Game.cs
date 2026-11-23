@@ -369,7 +369,7 @@ public sealed partial class TableTools
         if ((bold || italic) && align == null) return ToolResult.Fail("bold and italic go with align.");
         double? turn = a.Num("turn");
         if (turn is { } turned && (text.Length == 0 || pts.Count != 1 || !double.IsFinite(turned))) return ToolResult.Fail("turn goes with text at one point, in degrees.");
-        if (a.Num("wrap") is { } wide && (align == null || pts.Count != 1 || !Stroke.Wrapped(wide))) return ToolResult.Fail($"wrap goes with align and text at one point, {Stroke.LeastLetter}–{Stroke.MostWrap} map units wide.");
+        if (a.Num("wrap") is { } wide && (align == null || pts.Count != 1 || !Stroke.Boxed(wide, letter ?? GroundNames.PlaceLetter))) return ToolResult.Fail($"wrap goes with align, text at one point, up to {Stroke.MostWrapLetters} letters wide.");
         Stroke? rewritten = null;
         if (a.Str("id")?.Trim() is { Length: > 0 } id)
         {

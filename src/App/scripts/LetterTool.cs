@@ -168,7 +168,7 @@ sealed class LetterTool
         double letter = LetterUnits, left = Math.Min(a.X, b.X), right = Math.Max(a.X, b.X), top = Math.Max(a.Z, b.Z);
         var style = Fresh(_drawings.DrawBoard());
         if (right - left < DragLeast * letter) { Begin(new List<Vec2> { a }, "", style, letter, null); return; }
-        style.Wrap = right - left;
+        style.Wrap = Math.Min(right - left, letter * Stroke.MostWrapLetters);
         double x = style.Align switch { Stroke.AlignLeft => left, Stroke.AlignRight => right, _ => (left + right) / 2 };
         Begin(new List<Vec2> { new(x, top) }, "", style, letter, null);
         if (_typing is not { } t || Boxed(t) is not { } box) return;
@@ -273,6 +273,7 @@ sealed class LetterTool
         keys.GuiInput += e =>
         {
             if (e is not InputEventKey { Pressed: true } key) return;
+            if (key.Keycode == Key.Tab) { keys.AcceptEvent(); return; }
             if (key.Keycode == Key.Escape)
             {
                 keys.AcceptEvent();
