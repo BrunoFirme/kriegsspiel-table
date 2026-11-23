@@ -22,7 +22,15 @@ static class DicePanelTests
         Check.Equal(2, h.Hud.Ctx.Cfg.DiceHand.GetValueOrDefault(7), "two d7 in the hand");
         Check.That(Labels(body).Any(t => t == "2d7"), "the hand reads 2d7");
         sides.Value = 5000;
-        Check.Equal(1000.0, sides.Value, "sides stop at the server's most");
+        Check.Equal((double)KTable.Core.Protocol.RollDice.MostSides, sides.Value, "sides stop at the server's most");
+        foreach (int more in new[] { 3, 13, 30, 4, 8, 10, 12, 20 })
+        {
+            sides.Value = more;
+            Pressed(body, "Add");
+        }
+        await r.Frames(2);
+        Check.That(body.Size.X < Ui.Px(260), "a long hand wraps instead of widening the panel: " + body.Size.X);
+        foreach (int more in new[] { 3, 13, 30, 4, 8, 10, 12, 20 }) h.Hud.Ctx.Cfg.DiceHand.Remove(more);
         Pressed(body, "Roll");
         for (int i = 0; i < 30 && !Labels(body).Any(t => t.StartsWith("2d7 ")); i++) await r.Frames(1);
         var line = Labels(body).FirstOrDefault(t => t.StartsWith("2d7 ")) ?? "";

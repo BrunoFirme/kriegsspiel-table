@@ -1090,7 +1090,7 @@ public sealed class RollDice : Command
     public List<string> PieceIds { get; set; } = new();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool Open { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<double>? Thrown { get; set; }
-    public const int ThrowStops = 8;
+    public const int ThrowStops = 8, LeastSides = 2, MostSides = 1000;
     [JsonIgnore] public bool ThrowIsSound => Thrown is not { } path || path.Count is > 4 and <= 1 + ThrowStops * 4 && (path.Count - 1) % 4 == 0 && path.All(double.IsFinite) && path[0] > 0;
     public override Sender SentBy() => Sender.Umpire;
     public override bool OnUndoStack() => false;

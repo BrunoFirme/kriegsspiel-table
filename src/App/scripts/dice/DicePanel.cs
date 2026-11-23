@@ -11,7 +11,7 @@ sealed class DicePanel : HudPart
     public System.Action? ShowTableDice;
     readonly Label _results;
     bool _fresh;
-    const int ResultSize = 15, LeastSides = 2, MostSides = 1000, AnySidesStart = 100;
+    const int ResultSize = 15, AnySidesStart = 100;
 
     public DicePanel(HudContext c, IHudShell shell) : base(c)
     {
@@ -36,7 +36,7 @@ sealed class DicePanel : HudPart
     {
         box.CustomMinimumSize = Ui.Px(176, 0);
         var pool = Cfg.DiceHand;
-        var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = Spell(), CustomMinimumSize = Ui.Px(0, 22) };
+        var line = new Label { HorizontalAlignment = HorizontalAlignment.Center, Text = Spell(), CustomMinimumSize = Ui.Px(0, 22), AutowrapMode = TextServer.AutowrapMode.WordSmart };
         string Spell() => pool.Count == 0 ? "—" : string.Join(" + ", pool.Where(e => e.Value > 0).OrderBy(e => e.Key).Select(e => $"{e.Value}d{e.Key}"));
         var faces = new GridContainer { Columns = 3 };
         faces.AddThemeConstantOverride("h_separation", Ui.Px(Ui.Gap.Tight));
@@ -57,7 +57,7 @@ sealed class DicePanel : HudPart
         box.AddChild(faces);
         var any = new HBoxContainer();
         any.AddThemeConstantOverride("separation", Ui.Px(Ui.Gap.Tight));
-        var sidesBox = new SpinBox { MinValue = LeastSides, MaxValue = MostSides, Step = 1, Rounded = true, Value = AnySidesStart, Prefix = "d", TooltipText = "Sides" };
+        var sidesBox = new SpinBox { MinValue = RollDice.LeastSides, MaxValue = RollDice.MostSides, Step = 1, Rounded = true, Value = AnySidesStart, Prefix = "d", TooltipText = "Sides" };
         sidesBox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         var addAny = Btn("Add", () => AddDie((int)sidesBox.Value), "add a die with these sides · click again for another");
         addAny.CustomMinimumSize = Ui.Px(52, 30);

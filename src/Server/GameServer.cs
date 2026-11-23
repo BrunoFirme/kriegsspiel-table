@@ -911,7 +911,7 @@ public sealed partial class GameServer
                 else
                 {
                     d.Layer = null;
-                    d.Sides = Math.Clamp(d.Sides, 2, 1000);
+                    d.Sides = Math.Clamp(d.Sides, RollDice.LeastSides, RollDice.MostSides);
                     d.Count = Math.Clamp(d.Count, 1, 50);
                     d.Results = Enumerable.Range(0, d.Count).Select(_ => _rng.Next(1, d.Sides + 1)).ToList();
                 }
