@@ -90,6 +90,22 @@ sealed class PendingPoses
         if (PieceLift.To(_selection.Handled.Where(PieceLift.Can).Select(n => (n, PieceLift.Settled(high, false)))) is { } lifted) _c.S.Do(lifted);
     }
 
+    public PieceNode? FirstTiltable => _selection.Handled.FirstOrDefault(Tiltable);
+
+    static bool Tiltable(PieceNode n) => !n.IsDie && !n.IsEffect;
+
+    public void TiltSelectionTo(double? across, double? along)
+    {
+        Flush();
+        var cmds = new List<Command>();
+        foreach (var n in _selection.Handled.Where(Tiltable))
+        {
+            double x = across ?? n.Piece.TiltX, z = along ?? n.Piece.TiltZ;
+            if (Tilt.Signed(x) != n.Piece.TiltX || Tilt.Signed(z) != n.Piece.TiltZ) cmds.Add(new TiltPiece { Layer = n.Layer, Id = n.Piece.Id, X = x, Z = z });
+        }
+        if (cmds.Count > 0) _c.DoAll(cmds);
+    }
+
     public void ScaleSmooth(double factor)
     {
         if (_hand.Holding) { _c.Say("Put the pieces down to resize them"); return; }

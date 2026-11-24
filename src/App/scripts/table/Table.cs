@@ -772,6 +772,8 @@ public partial class Table : Node3D
     public void MoveSelectionTo(Vec2 centre) => Poses.MoveSelectionTo(centre);
     public PieceNode? FirstMovable => Poses.FirstMovable;
     public void LiftSelectionTo(double high) => Poses.LiftSelectionTo(high);
+    public PieceNode? FirstTiltable => Poses.FirstTiltable;
+    public void TiltSelectionTo(double? across, double? along) => Poses.TiltSelectionTo(across, along);
     public void StretchSelectionTo(double? across, double? deep, double? tall = null) => Poses.StretchSelectionTo(across, deep, tall);
     public bool Holding => Hand.Holding;
     public void FormRows(int rows) => Hand.FormRows(rows);

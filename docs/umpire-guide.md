@@ -145,7 +145,8 @@ turn to the piece's own sides and end in squares: pull one and only that size ch
 (**Size X**), front to back (**Size Y**) or how tall it stands (**Size Z**), up to ten times and down to a tenth of the
 piece's own (**Shift**: tenths of a unit). Pieces standing on a piece made taller rise with its top. Its window takes exact numbers:
 where the selection stands (**X**, **Y**, the middle of several pieces), **Z**, how high it flies (0 stands it on
-the ground), its **Turn** and its **Size**, and its **Size X**, **Size Y** and **Size Z** in table units, each apart, to
+the ground), its **Turn**, **Tilt X** and **Tilt Y**, how far it leans forward or back and to its side in degrees (0
+stands it level, as for a piece that came in tilted from a module), its **Size**, and its **Size X**, **Size Y** and **Size Z** in table units, each apart, to
 make a piece or an effect wider, deeper or taller than its own shape (smoke over an area, a longer wall, a higher
 tower). Once the map has a
 scale, the piece's size in the scenario's measure shows under them. With a map sheet picked the window takes the

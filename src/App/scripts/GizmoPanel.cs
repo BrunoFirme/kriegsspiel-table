@@ -9,12 +9,12 @@ sealed class GizmoPanel : HudPart
 {
     public const string Key = "gizmo";
     public readonly FloatPanel Panel;
-    SpinBox? _x, _z, _lift, _turn, _size, _wide, _deep, _tall;
+    SpinBox? _x, _z, _lift, _turn, _tiltX, _tiltY, _size, _wide, _deep, _tall;
     Label? _measured;
     string? _sheetShown, _nameShown;
     bool _syncing;
 
-    const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, LiftStep = 0.01, Farthest = 100000, FullTurn = 360;
+    const double PlaceStep = 0.01, TurnStep = 0.1, SizeStep = 0.01, LiftStep = 0.01, Farthest = 100000, FullTurn = 360, HalfTurn = 180;
     const float FieldWidth = 104;
 
     public GizmoPanel(HudContext ctx, IHudShell shell) : base(ctx) => Panel = shell.MakePanel(Key, "Turn / resize");
@@ -31,7 +31,7 @@ sealed class GizmoPanel : HudPart
             Panel.Body.RemoveChild(c);
             c.QueueFree();
         }
-        _x = _z = _lift = _turn = _size = _wide = _deep = _tall = null;
+        _x = _z = _lift = _turn = _tiltX = _tiltY = _size = _wide = _deep = _tall = null;
         _measured = null;
         _sheetShown = null;
         _nameShown = null;
@@ -155,6 +155,15 @@ sealed class GizmoPanel : HudPart
         _turn = Field(form, "Turn", Table.Norm360(now.Rot), 0, FullTurn, TurnStep, v => T.SetSelectionTransform(v, null));
         _turn.Suffix = "°";
         _turn.TooltipText = "Which way each piece faces, in degrees clockwise";
+        if (T.FirstTiltable is { } tilted)
+        {
+            _tiltX = Field(form, "Tilt X", tilted.Piece.TiltX, -HalfTurn, HalfTurn, TurnStep, v => T.TiltSelectionTo(v, null));
+            _tiltX.Suffix = "°";
+            _tiltX.TooltipText = "How far each piece leans forward or back, in degrees · 0 stands it level";
+            _tiltY = Field(form, "Tilt Y", tilted.Piece.TiltZ, -HalfTurn, HalfTurn, TurnStep, v => T.TiltSelectionTo(null, v));
+            _tiltY.Suffix = "°";
+            _tiltY.TooltipText = "How far each piece leans to its side, in degrees · 0 stands it level";
+        }
         _size = Field(form, "Size", now.Scale, Table.MinScale, Table.MaxScale, Table.MinScale, v => T.SetSelectionTransform(null, v));
         (_size.CustomArrowStep, _size.Prefix) = (SizeStep, "×");
         _size.TooltipText = "Each piece's size against the size its kind has, every side together";
@@ -236,6 +245,11 @@ sealed class GizmoPanel : HudPart
         Show(_z, pose.Centre.Z);
         if (T.SelectedNodes.FirstOrDefault(PieceLift.Can) is { } flyer) Show(_lift, flyer.Piece.Aloft);
         Show(_turn, Table.Norm360(pose.Rot));
+        if (T.FirstTiltable is { } tilted)
+        {
+            Show(_tiltX, tilted.Piece.TiltX);
+            Show(_tiltY, tilted.Piece.TiltZ);
+        }
         Show(_size, pose.Scale);
         if (T.FirstMovable is { } first)
         {
