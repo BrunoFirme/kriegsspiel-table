@@ -91,6 +91,21 @@ public class HandTests
     }
 
     [Fact]
+    public void A_shaped_piece_rests_by_its_shape_not_by_the_box_around_it()
+    {
+        var block = new FakePiece("base", 0, 0, 2, 2, thickness: 0.3f);
+        var token = new FakePiece("token", 0, 0, 2, 2) { Diamond = true };
+        var footing = new Footing<FakePiece>((_, _) => new[] { block }, _ => false);
+        var beside = new Vec2(1.8, 1.8);
+        Assert.Equal((beside, 0.0), footing.Rest(token, beside, 180, new HashSet<FakePiece> { token }));
+        Assert.True(footing.OnGround(token, beside, 180));
+        var boxed = new FakePiece("boxed", 0, 0, 2, 2);
+        Assert.NotEqual((beside, 0.0), footing.Rest(boxed, beside, 180, new HashSet<FakePiece> { boxed }));
+        Assert.False(footing.OnGround(boxed, beside, 180));
+        Assert.True(footing.Rest(token, new Vec2(1.2, 0), 180, new HashSet<FakePiece> { token }, slide: false).y > 0.2);
+    }
+
+    [Fact]
     public void A_piece_in_the_hand_is_under_nothing()
     {
         var block = new FakePiece("base", 0, 0, 6, 6, thickness: 0.3f);

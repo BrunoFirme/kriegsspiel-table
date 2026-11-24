@@ -10,6 +10,7 @@ interface IHeldPieces
 {
     bool Holding { get; }
     void Rotate(double deg);
+    double SeatedY(PieceNode n, Vec2 pos, double rot, HashSet<PieceNode> moving);
 }
 
 interface IKnobDrag
@@ -180,12 +181,17 @@ sealed class PendingPoses
         _timer = -1;
         if (_pending.Count == 0 && _stretched.Count == 0) return;
         var cmds = new List<Command>();
+        var moving = _pending.Keys.Select(k => _pieces.NodeOf(k.layer, k.id)).OfType<PieceNode>().ToHashSet();
         foreach (var ((layer, id), t) in _pending)
         {
             var p = _c.S.View.Find(layer, id);
             if (p == null) continue;
-            if ((t.pos - p.Pos).Length > 1e-6 || Math.Abs(Table.Norm360(t.rot) - p.RotDeg) > 1e-6)
-                cmds.Add(new MovePiece { Layer = layer, Id = id, Pos = t.pos, RotDeg = Table.Norm360(t.rot), Stack = p.Stack });
+            bool moved = (t.pos - p.Pos).Length > 1e-6;
+            if (moved || Math.Abs(Table.Norm360(t.rot) - p.RotDeg) > 1e-6)
+            {
+                double y = moved && !p.Flies && _pieces.NodeOf(layer, id) is { } n ? _hand.SeatedY(n, t.pos, t.rot, moving) : p.Y;
+                cmds.Add(new MovePiece { Layer = layer, Id = id, Pos = t.pos, RotDeg = Table.Norm360(t.rot), Stack = p.Stack, Y = y });
+            }
             if (Math.Abs(t.scale - p.Scale) > 1e-6 && !_stretched.ContainsKey((layer, id)))
                 cmds.Add(new KTable.Core.Protocol.SetScale { Layer = layer, Id = id, Scale = t.scale });
         }

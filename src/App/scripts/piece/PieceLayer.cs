@@ -271,7 +271,7 @@ sealed class PieceLayer
         _ => null,
     };
 
-    static float? RayMeets(PieceNode n, Vector3 ro, Vector3 rd)
+    internal static float? RayMeets(PieceNode n, Vector3 ro, Vector3 rd)
     {
         var inv = n.GlobalTransform.AffineInverse();
         Vector3 o = inv * ro, d = inv.Basis * rd;
@@ -289,9 +289,42 @@ sealed class PieceLayer
         if (near > far || far < 0) return null;
         float at = Mathf.Max(near, 0);
         var local = o + d * at;
-        if (Mathf.Abs(local.Y - hi.Y) < 1e-3f || Mathf.Abs(local.Y - lo.Y) < 1e-3f)
-            if (!n.Contains(Coords.FromWorld(n.TableTransform() * local))) return null;
-        return at;
+        if (n.ShowsModel)
+        {
+            if (Mathf.Abs(local.Y - hi.Y) < 1e-3f || Mathf.Abs(local.Y - lo.Y) < 1e-3f)
+                if (!n.Contains(Coords.FromWorld(n.TableTransform() * local))) return null;
+            return at;
+        }
+        return IntoShape(n, o, d, at, far);
+    }
+
+    const int ShapeSteps = 192, ShapeHalvings = 8;
+
+    static float? IntoShape(PieceNode n, Vector3 o, Vector3 d, float from, float to)
+    {
+        var table = n.TableTransform();
+        bool Inside(float t) => n.Contains(Coords.FromWorld(table * (o + d * t)));
+        if (Inside(from)) return from;
+        float across = new Vector2(d.X, d.Z).Length() * (to - from), finest = Mathf.Min(n.Footprint.X, n.Footprint.Y) / ShapeSteps;
+        int steps = Math.Clamp((int)Mathf.Ceil(across / Mathf.Max(finest, 1e-6f)), 1, ShapeSteps);
+        float outside = from;
+        for (int i = 1; i <= steps; i++)
+        {
+            float t = from + (to - from) * i / steps;
+            if (!Inside(t))
+            {
+                outside = t;
+                continue;
+            }
+            for (int k = 0; k < ShapeHalvings; k++)
+            {
+                float mid = (outside + t) / 2;
+                if (Inside(mid)) t = mid;
+                else outside = mid;
+            }
+            return t;
+        }
+        return null;
     }
 
     public void ShowRings()

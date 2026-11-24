@@ -43,8 +43,12 @@ sealed class FakePiece : ITablePiece
         var middle = this.MiddleAt(at, rotDeg);
         double rad = rotDeg * Math.PI / 180, dx = point.X - middle.X, dz = point.Z - middle.Z;
         double lx = dx * -Math.Cos(rad) + dz * Math.Sin(rad), lz = dx * -Math.Sin(rad) + dz * -Math.Cos(rad);
-        return Math.Abs(lx) <= Footprint.X / 2 && Math.Abs(lz) <= Footprint.Y / 2;
+        return Diamond
+            ? Math.Abs(lx) / (Footprint.X / 2) + Math.Abs(lz) / (Footprint.Y / 2) <= 1
+            : Math.Abs(lx) <= Footprint.X / 2 && Math.Abs(lz) <= Footprint.Y / 2;
     }
+
+    public bool Diamond { get; init; }
 }
 
 static class HandLayouts

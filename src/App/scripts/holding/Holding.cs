@@ -352,6 +352,16 @@ sealed partial class Carry : IHeldPieces
 
     public double RestingY(PieceNode n, Vec2 pos, double rot, double y) => _footing.Stored(n, pos, rot, y);
 
+    public double SeatedY(PieceNode n, Vec2 pos, double rot, HashSet<PieceNode> moving)
+    {
+        var skip = new HashSet<PieceNode>(moving);
+        var riders = new Queue<PieceNode>([n]);
+        while (riders.TryDequeue(out var under))
+            foreach (var r in RestingOn(under))
+                if (skip.Add(r)) riders.Enqueue(r);
+        return _footing.Stored(n, pos, rot, _footing.Rest(n, pos, rot, skip, slide: false).y, skip);
+    }
+
     public double StoredAt(Vec2 p, double y) => _footing.StoredAt(p, y);
 
     void SettleDrop(List<Held> held)

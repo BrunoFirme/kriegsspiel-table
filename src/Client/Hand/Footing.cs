@@ -10,7 +10,7 @@ public sealed class Footing<T> where T : class, ITablePiece
     public const float Settle = 0.02f;
     const float Sink = 0.03f;
 
-    const double ProbeSpread = 0.51, SlideReach = 0.7, Margin = 1e-3;
+    const double ProbeSpread = 0.51, SlideReach = 0.7, Margin = 1e-3, ProbeStep = 0.255, ShapeStep = 0.235;
 
     readonly Func<Vec2, double, IEnumerable<T>> _around;
     readonly Func<T, bool> _inHand;
@@ -42,10 +42,12 @@ public sealed class Footing<T> where T : class, ITablePiece
         var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
         var middle = n.MiddleAt(pos, rot);
         var under = Supports(middle, ProbeRadius(w, d), n.Layer, n, skip, landed);
+        var shaped = Shaped(n, pos, rot, middle, along, back);
         for (int i = -2; i <= 2; i++)
             for (int j = -2; j <= 2; j++)
             {
-                var q = middle + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
+                if (!shaped[i + 2, j + 2]) continue;
+                var q = middle + new Vec2(along.X * i * w * ProbeStep + back.X * j * d * ProbeStep, along.Z * i * w * ProbeStep + back.Z * j * d * ProbeStep);
                 if (PiecesTop(q, under) > GroundAt(q) + Settle) return false;
             }
         return true;
@@ -145,6 +147,7 @@ public sealed class Footing<T> where T : class, ITablePiece
         var back = new Vec2(-Math.Sin(rad), -Math.Cos(rad));
         float size = Mathf.Max(w, d);
         var under = Supports(n.MiddleAt(pos, rot), ProbeRadius(w, d) + (slide && !n.IsProp ? size * SlideReach : 0), n.Layer, n, moving, landed);
+        var shaped = Shaped(n, pos, rot, n.MiddleAt(pos, rot), along, back);
         (float middle, float all, float middleTop) Probe(Vec2 at)
         {
             float mid = 0, all = 0, midTop = float.MinValue;
@@ -152,7 +155,8 @@ public sealed class Footing<T> where T : class, ITablePiece
             for (int i = -2; i <= 2; i++)
                 for (int j = -2; j <= 2; j++)
                 {
-                    var q = from + new Vec2(along.X * i * w * 0.255 + back.X * j * d * 0.255, along.Z * i * w * 0.255 + back.Z * j * d * 0.255);
+                    if (!shaped[i + 2, j + 2]) continue;
+                    var q = from + new Vec2(along.X * i * w * ProbeStep + back.X * j * d * ProbeStep, along.Z * i * w * ProbeStep + back.Z * j * d * ProbeStep);
                     float t = PiecesTop(q, under);
                     float rel = Mathf.Max(0, t - GroundAt(q));
                     all = Mathf.Max(all, rel);
@@ -173,6 +177,23 @@ public sealed class Footing<T> where T : class, ITablePiece
                 if (all - m <= 0.05f && m <= m0 + 0.05f) return (cand, On(cand, mt));
             }
         return (pos, On(pos, mt0));
+    }
+
+    static bool[,] Shaped(T n, Vec2 pos, double rot, Vec2 middle, Vec2 along, Vec2 back)
+    {
+        float w = n.Footprint.X, d = n.Footprint.Y;
+        var inside = new bool[5, 5];
+        bool any = false;
+        for (int i = -2; i <= 2; i++)
+            for (int j = -2; j <= 2; j++)
+            {
+                var q = middle + new Vec2(along.X * i * w * ShapeStep + back.X * j * d * ShapeStep, along.Z * i * w * ShapeStep + back.Z * j * d * ShapeStep);
+                any |= inside[i + 2, j + 2] = n.IsProp || n.ContainsAt(q, pos, rot);
+            }
+        if (!any)
+            for (int i = 0; i < 5; i++)
+                for (int j = 0; j < 5; j++) inside[i, j] = true;
+        return inside;
     }
 
     public List<T> RestingOn(T under, IEnumerable<T> near, Func<string, bool> interactive) =>
