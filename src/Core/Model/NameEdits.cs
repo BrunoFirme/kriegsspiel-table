@@ -38,10 +38,23 @@ public static class NameEdits
         return sized;
     }
 
-    public static Stroke Widened(Stroke name, double wide, int side, double by, double letter)
+    public static double Fitted(double wrap, double letter)
     {
         double most = Math.Min(letter * Stroke.MostWrapLetters, Stroke.MostWrap);
-        double now = Math.Clamp(wide + by, Math.Min(letter, most), most), grown = now - wide;
+        return Math.Clamp(wrap, Math.Min(letter, most), most);
+    }
+
+    public static Stroke Relettered(Stroke name, double letter)
+    {
+        var sized = Json.Clone(name);
+        sized.Letter = letter;
+        if (name.Wrap is { } wrap) sized.Wrap = Fitted(wrap, letter);
+        return sized;
+    }
+
+    public static Stroke Widened(Stroke name, double wide, int side, double by, double letter)
+    {
+        double now = Fitted(wide + by, letter), grown = now - wide;
         double share = name.Align switch { Stroke.AlignLeft => 0, Stroke.AlignRight => 1, _ => 0.5 };
         double shift = side > 0 ? grown * share : -grown * (1 - share), rad = name.TurnDeg * Math.PI / 180;
         var widened = Json.Clone(name);

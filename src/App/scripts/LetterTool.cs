@@ -315,6 +315,7 @@ sealed class LetterTool
         named.Points = t.Points;
         named.Text = text;
         named.Letter = t.Letter;
+        if (named.Wrap is { } wrap) named.Wrap = NameEdits.Fitted(wrap, t.Letter);
         return named;
     }
 
@@ -387,10 +388,9 @@ sealed class LetterTool
         }
         if (over is { } g && _pick.Under(g) is { } name)
         {
-            var sized = Json.Clone(name);
-            sized.Letter = Math.Clamp(_drawings.Lettering.LetterOf(name) * by, Stroke.LeastLetter, Stroke.MostLetter);
-            _pick.Lay(name, sized);
-            _c.Say($"{name.Text} {Said(sized.Letter.Value)} tall");
+            double letter = Math.Clamp(_drawings.Lettering.LetterOf(name) * by, Stroke.LeastLetter, Stroke.MostLetter);
+            _pick.Lay(name, NameEdits.Relettered(name, letter));
+            _c.Say($"{name.Text} {Said(letter)} tall");
             return;
         }
         LetterKept = LetterKept * by;

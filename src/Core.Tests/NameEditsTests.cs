@@ -115,6 +115,21 @@ public class NameEditsTests
         Assert.Null(NameEdits.Sized(Name(new Vec2(1, 1)), new Vec2(0, 0), 2, 2).Wrap);
     }
 
+    [Fact]
+    public void New_letters_under_a_text_box_keep_its_width_within_what_they_allow()
+    {
+        var name = Name(new Vec2(1, 1));
+        name.Wrap = 2 * Stroke.MostWrapLetters;
+        var smaller = NameEdits.Relettered(name, 2 / 1.15);
+        Assert.Null(smaller.Refused());
+        Assert.Equal(2 / 1.15 * Stroke.MostWrapLetters, smaller.Wrap!.Value, Close);
+        name.Wrap = 3;
+        Assert.Equal(3, NameEdits.Relettered(name, 1).Wrap!.Value, Close);
+        Assert.Equal(4, NameEdits.Relettered(name, 4).Wrap!.Value, Close);
+        Assert.Null(NameEdits.Relettered(Name(new Vec2(1, 1)), 1).Wrap);
+        Assert.Equal(2, name.Letter!.Value, Close);
+    }
+
     [Theory]
     [InlineData(3.0, true)]
     [InlineData(0.0, false)]
